@@ -1,5 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="564" height="564" viewBox="-12 -12 564 564" font-family="monospace">
-<rect x="0" y="0" width="540" height="540" fill="#fafafa" stroke="#444"/>
+<svg xmlns="http://www.w3.org/2000/svg" width="384" height="564" viewBox="-12 -12 384 564" font-family="monospace">
+<rect x="0" y="0" width="360" height="540" fill="#fafafa" stroke="#444"/>
 <line x1="0" y1="0" x2="0" y2="540" stroke="#ddd" stroke-width="1"/>
 <line x1="48" y1="0" x2="48" y2="540" stroke="#ddd" stroke-width="1"/>
 <line x1="96" y1="0" x2="96" y2="540" stroke="#ddd" stroke-width="1"/>
@@ -13,173 +13,147 @@
 <line x1="480" y1="0" x2="480" y2="540" stroke="#ddd" stroke-width="1"/>
 <line x1="528" y1="0" x2="528" y2="540" stroke="#ddd" stroke-width="1"/>
 <line x1="576" y1="0" x2="576" y2="540" stroke="#ddd" stroke-width="1"/>
-<line x1="0" y1="0" x2="540" y2="0" stroke="#ddd" stroke-width="1"/>
-<line x1="0" y1="48" x2="540" y2="48" stroke="#ddd" stroke-width="1"/>
-<line x1="0" y1="96" x2="540" y2="96" stroke="#ddd" stroke-width="1"/>
-<line x1="0" y1="144" x2="540" y2="144" stroke="#ddd" stroke-width="1"/>
-<line x1="0" y1="192" x2="540" y2="192" stroke="#ddd" stroke-width="1"/>
-<line x1="0" y1="240" x2="540" y2="240" stroke="#ddd" stroke-width="1"/>
-<line x1="0" y1="288" x2="540" y2="288" stroke="#ddd" stroke-width="1"/>
-<line x1="0" y1="336" x2="540" y2="336" stroke="#ddd" stroke-width="1"/>
-<line x1="0" y1="384" x2="540" y2="384" stroke="#ddd" stroke-width="1"/>
-<line x1="0" y1="432" x2="540" y2="432" stroke="#ddd" stroke-width="1"/>
-<line x1="0" y1="480" x2="540" y2="480" stroke="#ddd" stroke-width="1"/>
-<line x1="0" y1="528" x2="540" y2="528" stroke="#ddd" stroke-width="1"/>
-<line x1="0" y1="576" x2="540" y2="576" stroke="#ddd" stroke-width="1"/>
-<line x1="24.0" y1="168.0" x2="24.0" y2="216.0" stroke="#8abf8a" stroke-width="3.0" opacity="0.7"/>
-<line x1="24.0" y1="216.0" x2="24.0" y2="264.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
-<line x1="24.0" y1="264.0" x2="72.0" y2="264.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
-<line x1="24.0" y1="264.0" x2="24.0" y2="312.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
-<line x1="24.0" y1="312.0" x2="72.0" y2="312.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
-<line x1="24.0" y1="312.0" x2="24.0" y2="360.0" stroke="#8abf8a" stroke-width="3.0" opacity="0.7"/>
-<line x1="24.0" y1="360.0" x2="24.0" y2="408.0" stroke="#8abf8a" stroke-width="3.0" opacity="0.7"/>
-<line x1="24.0" y1="408.0" x2="24.0" y2="456.0" stroke="#8abf8a" stroke-width="3.0" opacity="0.7"/>
-<line x1="24.0" y1="456.0" x2="72.0" y2="456.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
-<line x1="24.0" y1="456.0" x2="24.0" y2="504.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
-<line x1="24.0" y1="504.0" x2="24.0" y2="552.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
-<line x1="24.0" y1="552.0" x2="72.0" y2="552.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
-<line x1="72.0" y1="72.0" x2="120.0" y2="72.0" stroke="#8abf8a" stroke-width="3.0" opacity="0.7"/>
+<line x1="0" y1="0" x2="360" y2="0" stroke="#ddd" stroke-width="1"/>
+<line x1="0" y1="48" x2="360" y2="48" stroke="#ddd" stroke-width="1"/>
+<line x1="0" y1="96" x2="360" y2="96" stroke="#ddd" stroke-width="1"/>
+<line x1="0" y1="144" x2="360" y2="144" stroke="#ddd" stroke-width="1"/>
+<line x1="0" y1="192" x2="360" y2="192" stroke="#ddd" stroke-width="1"/>
+<line x1="0" y1="240" x2="360" y2="240" stroke="#ddd" stroke-width="1"/>
+<line x1="0" y1="288" x2="360" y2="288" stroke="#ddd" stroke-width="1"/>
+<line x1="0" y1="336" x2="360" y2="336" stroke="#ddd" stroke-width="1"/>
+<line x1="0" y1="384" x2="360" y2="384" stroke="#ddd" stroke-width="1"/>
+<line x1="0" y1="432" x2="360" y2="432" stroke="#ddd" stroke-width="1"/>
+<line x1="0" y1="480" x2="360" y2="480" stroke="#ddd" stroke-width="1"/>
+<line x1="0" y1="528" x2="360" y2="528" stroke="#ddd" stroke-width="1"/>
+<line x1="0" y1="576" x2="360" y2="576" stroke="#ddd" stroke-width="1"/>
+<line x1="24.0" y1="24.0" x2="72.0" y2="24.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
+<line x1="24.0" y1="24.0" x2="24.0" y2="72.0" stroke="#8abf8a" stroke-width="3.0" opacity="0.7"/>
+<line x1="24.0" y1="72.0" x2="24.0" y2="120.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
+<line x1="24.0" y1="120.0" x2="24.0" y2="168.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
+<line x1="24.0" y1="216.0" x2="72.0" y2="216.0" stroke="#8abf8a" stroke-width="3.0" opacity="0.7"/>
+<line x1="24.0" y1="264.0" x2="72.0" y2="264.0" stroke="#8abf8a" stroke-width="2.3" opacity="0.7"/>
+<line x1="24.0" y1="456.0" x2="72.0" y2="456.0" stroke="#8abf8a" stroke-width="3.0" opacity="0.7"/>
+<line x1="24.0" y1="456.0" x2="24.0" y2="504.0" stroke="#8abf8a" stroke-width="3.0" opacity="0.7"/>
+<line x1="24.0" y1="504.0" x2="24.0" y2="552.0" stroke="#8abf8a" stroke-width="3.0" opacity="0.7"/>
+<line x1="24.0" y1="552.0" x2="72.0" y2="552.0" stroke="#8abf8a" stroke-width="3.0" opacity="0.7"/>
+<line x1="72.0" y1="24.0" x2="120.0" y2="24.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
+<line x1="72.0" y1="72.0" x2="120.0" y2="72.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
 <line x1="72.0" y1="72.0" x2="72.0" y2="120.0" stroke="#8abf8a" stroke-width="3.0" opacity="0.7"/>
 <line x1="72.0" y1="120.0" x2="72.0" y2="168.0" stroke="#8abf8a" stroke-width="3.0" opacity="0.7"/>
-<line x1="72.0" y1="168.0" x2="72.0" y2="216.0" stroke="#ff9900" stroke-width="3.7" opacity="0.7"/>
-<line x1="72.0" y1="216.0" x2="120.0" y2="216.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
-<line x1="72.0" y1="216.0" x2="72.0" y2="264.0" stroke="#8abf8a" stroke-width="3.0" opacity="0.7"/>
-<line x1="72.0" y1="264.0" x2="72.0" y2="312.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
-<line x1="72.0" y1="360.0" x2="120.0" y2="360.0" stroke="#ff9900" stroke-width="4.0" opacity="0.7"/>
+<line x1="72.0" y1="168.0" x2="72.0" y2="216.0" stroke="#8abf8a" stroke-width="3.0" opacity="0.7"/>
+<line x1="72.0" y1="216.0" x2="120.0" y2="216.0" stroke="#8abf8a" stroke-width="3.0" opacity="0.7"/>
+<line x1="72.0" y1="264.0" x2="120.0" y2="264.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
+<line x1="72.0" y1="264.0" x2="72.0" y2="312.0" stroke="#8abf8a" stroke-width="3.0" opacity="0.7"/>
+<line x1="72.0" y1="312.0" x2="120.0" y2="312.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
+<line x1="72.0" y1="360.0" x2="120.0" y2="360.0" stroke="#8abf8a" stroke-width="3.0" opacity="0.7"/>
 <line x1="72.0" y1="360.0" x2="72.0" y2="408.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
-<line x1="72.0" y1="408.0" x2="72.0" y2="456.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
-<line x1="72.0" y1="456.0" x2="120.0" y2="456.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
-<line x1="72.0" y1="456.0" x2="72.0" y2="504.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
-<line x1="72.0" y1="504.0" x2="120.0" y2="504.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
-<line x1="72.0" y1="552.0" x2="120.0" y2="552.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
+<line x1="72.0" y1="408.0" x2="120.0" y2="408.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
+<line x1="72.0" y1="408.0" x2="72.0" y2="456.0" stroke="#8abf8a" stroke-width="3.0" opacity="0.7"/>
+<line x1="72.0" y1="552.0" x2="120.0" y2="552.0" stroke="#ff9900" stroke-width="3.7" opacity="0.7"/>
+<line x1="120.0" y1="24.0" x2="168.0" y2="24.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
 <line x1="120.0" y1="72.0" x2="168.0" y2="72.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
-<line x1="120.0" y1="72.0" x2="120.0" y2="120.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
-<line x1="120.0" y1="120.0" x2="120.0" y2="168.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
-<line x1="120.0" y1="168.0" x2="120.0" y2="216.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
-<line x1="120.0" y1="216.0" x2="168.0" y2="216.0" stroke="#8abf8a" stroke-width="3.0" opacity="0.7"/>
 <line x1="120.0" y1="216.0" x2="120.0" y2="264.0" stroke="#8abf8a" stroke-width="3.0" opacity="0.7"/>
 <line x1="120.0" y1="264.0" x2="120.0" y2="312.0" stroke="#8abf8a" stroke-width="3.0" opacity="0.7"/>
-<line x1="120.0" y1="312.0" x2="168.0" y2="312.0" stroke="#8abf8a" stroke-width="3.0" opacity="0.7"/>
+<line x1="120.0" y1="312.0" x2="168.0" y2="312.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
 <line x1="120.0" y1="312.0" x2="120.0" y2="360.0" stroke="#8abf8a" stroke-width="3.0" opacity="0.7"/>
-<line x1="120.0" y1="360.0" x2="168.0" y2="360.0" stroke="#8abf8a" stroke-width="3.0" opacity="0.7"/>
-<line x1="120.0" y1="360.0" x2="120.0" y2="408.0" stroke="#8abf8a" stroke-width="3.0" opacity="0.7"/>
-<line x1="120.0" y1="408.0" x2="120.0" y2="456.0" stroke="#8abf8a" stroke-width="3.0" opacity="0.7"/>
-<line x1="120.0" y1="456.0" x2="168.0" y2="456.0" stroke="#8abf8a" stroke-width="3.0" opacity="0.7"/>
-<line x1="120.0" y1="504.0" x2="168.0" y2="504.0" stroke="#8abf8a" stroke-width="3.0" opacity="0.7"/>
-<line x1="120.0" y1="504.0" x2="120.0" y2="552.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
+<line x1="120.0" y1="360.0" x2="168.0" y2="360.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
+<line x1="120.0" y1="360.0" x2="120.0" y2="408.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
+<line x1="120.0" y1="552.0" x2="168.0" y2="552.0" stroke="#ff9900" stroke-width="3.7" opacity="0.7"/>
+<line x1="168.0" y1="24.0" x2="216.0" y2="24.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
 <line x1="168.0" y1="72.0" x2="216.0" y2="72.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
-<line x1="168.0" y1="216.0" x2="216.0" y2="216.0" stroke="#8abf8a" stroke-width="3.0" opacity="0.7"/>
-<line x1="168.0" y1="312.0" x2="216.0" y2="312.0" stroke="#8abf8a" stroke-width="3.0" opacity="0.7"/>
-<line x1="168.0" y1="360.0" x2="216.0" y2="360.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
-<line x1="168.0" y1="456.0" x2="216.0" y2="456.0" stroke="#8abf8a" stroke-width="3.0" opacity="0.7"/>
-<line x1="168.0" y1="456.0" x2="168.0" y2="504.0" stroke="#8abf8a" stroke-width="3.0" opacity="0.7"/>
-<line x1="168.0" y1="504.0" x2="216.0" y2="504.0" stroke="#8abf8a" stroke-width="3.0" opacity="0.7"/>
+<line x1="168.0" y1="168.0" x2="168.0" y2="216.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
+<line x1="168.0" y1="216.0" x2="168.0" y2="264.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
+<line x1="168.0" y1="264.0" x2="168.0" y2="312.0" stroke="#8abf8a" stroke-width="3.0" opacity="0.7"/>
+<line x1="168.0" y1="312.0" x2="216.0" y2="312.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
+<line x1="168.0" y1="312.0" x2="168.0" y2="360.0" stroke="#8abf8a" stroke-width="3.0" opacity="0.7"/>
+<line x1="168.0" y1="360.0" x2="168.0" y2="408.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
+<line x1="168.0" y1="408.0" x2="216.0" y2="408.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
+<line x1="168.0" y1="552.0" x2="216.0" y2="552.0" stroke="#ff9900" stroke-width="3.7" opacity="0.7"/>
 <line x1="216.0" y1="24.0" x2="264.0" y2="24.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
-<line x1="216.0" y1="24.0" x2="216.0" y2="72.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
-<line x1="216.0" y1="216.0" x2="264.0" y2="216.0" stroke="#8abf8a" stroke-width="3.0" opacity="0.7"/>
-<line x1="216.0" y1="312.0" x2="264.0" y2="312.0" stroke="#8abf8a" stroke-width="3.0" opacity="0.7"/>
-<line x1="216.0" y1="456.0" x2="264.0" y2="456.0" stroke="#ff9900" stroke-width="3.7" opacity="0.7"/>
-<line x1="216.0" y1="504.0" x2="264.0" y2="504.0" stroke="#8abf8a" stroke-width="3.0" opacity="0.7"/>
+<line x1="216.0" y1="72.0" x2="264.0" y2="72.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
+<line x1="216.0" y1="120.0" x2="264.0" y2="120.0" stroke="#8abf8a" stroke-width="3.0" opacity="0.7"/>
+<line x1="216.0" y1="216.0" x2="264.0" y2="216.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
+<line x1="216.0" y1="216.0" x2="216.0" y2="264.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
+<line x1="216.0" y1="264.0" x2="216.0" y2="312.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
+<line x1="216.0" y1="408.0" x2="264.0" y2="408.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
+<line x1="216.0" y1="552.0" x2="264.0" y2="552.0" stroke="#ff9900" stroke-width="3.7" opacity="0.7"/>
 <line x1="264.0" y1="24.0" x2="264.0" y2="72.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
 <line x1="264.0" y1="72.0" x2="312.0" y2="72.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
-<line x1="264.0" y1="216.0" x2="312.0" y2="216.0" stroke="#8abf8a" stroke-width="3.0" opacity="0.7"/>
-<line x1="264.0" y1="312.0" x2="312.0" y2="312.0" stroke="#8abf8a" stroke-width="3.0" opacity="0.7"/>
-<line x1="264.0" y1="408.0" x2="312.0" y2="408.0" stroke="#8abf8a" stroke-width="3.0" opacity="0.7"/>
-<line x1="264.0" y1="408.0" x2="264.0" y2="456.0" stroke="#8abf8a" stroke-width="2.3" opacity="0.7"/>
-<line x1="264.0" y1="456.0" x2="312.0" y2="456.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
-<line x1="264.0" y1="456.0" x2="264.0" y2="504.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
-<line x1="264.0" y1="504.0" x2="312.0" y2="504.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
-<line x1="312.0" y1="72.0" x2="360.0" y2="72.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
-<line x1="312.0" y1="216.0" x2="360.0" y2="216.0" stroke="#8abf8a" stroke-width="3.0" opacity="0.7"/>
-<line x1="312.0" y1="312.0" x2="360.0" y2="312.0" stroke="#8abf8a" stroke-width="3.0" opacity="0.7"/>
-<line x1="312.0" y1="360.0" x2="360.0" y2="360.0" stroke="#8abf8a" stroke-width="3.0" opacity="0.7"/>
-<line x1="312.0" y1="360.0" x2="312.0" y2="408.0" stroke="#8abf8a" stroke-width="3.0" opacity="0.7"/>
+<line x1="264.0" y1="72.0" x2="264.0" y2="120.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
+<line x1="264.0" y1="120.0" x2="264.0" y2="168.0" stroke="#8abf8a" stroke-width="2.3" opacity="0.7"/>
+<line x1="264.0" y1="168.0" x2="264.0" y2="216.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
+<line x1="264.0" y1="408.0" x2="312.0" y2="408.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
+<line x1="264.0" y1="552.0" x2="312.0" y2="552.0" stroke="#ff9900" stroke-width="3.7" opacity="0.7"/>
+<line x1="312.0" y1="72.0" x2="312.0" y2="120.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
+<line x1="312.0" y1="120.0" x2="312.0" y2="168.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
+<line x1="312.0" y1="168.0" x2="312.0" y2="216.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
+<line x1="312.0" y1="216.0" x2="312.0" y2="264.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
+<line x1="312.0" y1="264.0" x2="312.0" y2="312.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
+<line x1="312.0" y1="312.0" x2="312.0" y2="360.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
+<line x1="312.0" y1="360.0" x2="312.0" y2="408.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
+<line x1="312.0" y1="408.0" x2="360.0" y2="408.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
+<line x1="312.0" y1="408.0" x2="312.0" y2="456.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
 <line x1="312.0" y1="456.0" x2="360.0" y2="456.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
-<line x1="312.0" y1="504.0" x2="360.0" y2="504.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
-<line x1="360.0" y1="24.0" x2="408.0" y2="24.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
-<line x1="360.0" y1="24.0" x2="360.0" y2="72.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
-<line x1="360.0" y1="216.0" x2="408.0" y2="216.0" stroke="#8abf8a" stroke-width="3.0" opacity="0.7"/>
-<line x1="360.0" y1="312.0" x2="408.0" y2="312.0" stroke="#8abf8a" stroke-width="3.0" opacity="0.7"/>
-<line x1="360.0" y1="360.0" x2="408.0" y2="360.0" stroke="#ff9900" stroke-width="4.0" opacity="0.7"/>
+<line x1="312.0" y1="552.0" x2="360.0" y2="552.0" stroke="#ff9900" stroke-width="4.0" opacity="0.7"/>
+<line x1="360.0" y1="216.0" x2="360.0" y2="264.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
+<line x1="360.0" y1="264.0" x2="360.0" y2="312.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
+<line x1="360.0" y1="312.0" x2="360.0" y2="360.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
 <line x1="360.0" y1="360.0" x2="360.0" y2="408.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
-<line x1="360.0" y1="408.0" x2="360.0" y2="456.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
-<line x1="360.0" y1="456.0" x2="408.0" y2="456.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
-<line x1="360.0" y1="456.0" x2="360.0" y2="504.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
-<line x1="408.0" y1="24.0" x2="456.0" y2="24.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
-<line x1="408.0" y1="216.0" x2="408.0" y2="264.0" stroke="#8abf8a" stroke-width="3.0" opacity="0.7"/>
-<line x1="408.0" y1="264.0" x2="456.0" y2="264.0" stroke="#8abf8a" stroke-width="3.0" opacity="0.7"/>
-<line x1="408.0" y1="264.0" x2="408.0" y2="312.0" stroke="#8abf8a" stroke-width="3.0" opacity="0.7"/>
-<line x1="408.0" y1="312.0" x2="456.0" y2="312.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
-<line x1="408.0" y1="360.0" x2="456.0" y2="360.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
-<line x1="408.0" y1="456.0" x2="456.0" y2="456.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
-<line x1="456.0" y1="24.0" x2="504.0" y2="24.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
-<line x1="456.0" y1="216.0" x2="504.0" y2="216.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
-<line x1="456.0" y1="264.0" x2="504.0" y2="264.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
-<line x1="456.0" y1="312.0" x2="504.0" y2="312.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
-<line x1="456.0" y1="312.0" x2="456.0" y2="360.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
-<line x1="456.0" y1="360.0" x2="504.0" y2="360.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
-<line x1="456.0" y1="360.0" x2="456.0" y2="408.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
-<line x1="456.0" y1="408.0" x2="456.0" y2="456.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
-<line x1="504.0" y1="24.0" x2="552.0" y2="24.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
-<line x1="504.0" y1="216.0" x2="552.0" y2="216.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
-<line x1="504.0" y1="264.0" x2="504.0" y2="312.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
-<line x1="504.0" y1="312.0" x2="504.0" y2="360.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
-<line x1="552.0" y1="24.0" x2="552.0" y2="72.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
-<line x1="552.0" y1="72.0" x2="552.0" y2="120.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
-<line x1="552.0" y1="120.0" x2="552.0" y2="168.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
-<line x1="552.0" y1="168.0" x2="552.0" y2="216.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
-<rect x="24" y="144" width="36" height="84" fill="#cfe3f7" stroke="#333" opacity="0.9"/>
-<text x="27.599999999999998" y="156" font-size="10">copper-cable</text>
-<circle cx="30.0" cy="150.0" r="4" fill="#1f77b4"><title>copper-cable.copper-plate-in</title></circle>
-<circle cx="54.0" cy="222.0" r="4" fill="#d62728"><title>copper-cable.copper-cable-out-0</title></circle>
-<rect x="120" y="360" width="36" height="96" fill="#cfe3f7" stroke="#333" opacity="0.9"/>
-<text x="123.60000000000001" y="372" font-size="10">electronic-circuit</text>
-<circle cx="126.0" cy="366.0" r="4" fill="#1f77b4"><title>electronic-circuit.copper-cable-in</title></circle>
-<circle cx="126.0" cy="450.0" r="4" fill="#1f77b4"><title>electronic-circuit.iron-plate-in</title></circle>
-<circle cx="150.0" cy="438.0" r="4" fill="#d62728"><title>electronic-circuit.electronic-circuit-out-0</title></circle>
-<rect x="384" y="360" width="36" height="108" fill="#cfe3f7" stroke="#333" opacity="0.9"/>
-<text x="387.59999999999997" y="372" font-size="10">inserter</text>
-<circle cx="390.0" cy="378.0" r="4" fill="#1f77b4"><title>inserter.electronic-circuit-in</title></circle>
-<circle cx="390.0" cy="366.0" r="4" fill="#1f77b4"><title>inserter.iron-gear-wheel-in</title></circle>
-<circle cx="390.0" cy="462.0" r="4" fill="#1f77b4"><title>inserter.iron-plate-in</title></circle>
-<circle cx="414.0" cy="450.0" r="4" fill="#d62728"><title>inserter.inserter-out-0</title></circle>
-<rect x="192" y="348" width="60" height="96" fill="#cfe3f7" stroke="#333" opacity="0.9"/>
-<text x="195.60000000000002" y="360" font-size="10">iron-gear-wheel</text>
-<circle cx="198.0" cy="354.0" r="4" fill="#1f77b4"><title>iron-gear-wheel.iron-plate-in</title></circle>
-<circle cx="246.0" cy="426.0" r="4" fill="#d62728"><title>iron-gear-wheel.iron-gear-wheel-out-0</title></circle>
-<circle cx="246.0" cy="438.0" r="4" fill="#d62728"><title>iron-gear-wheel.iron-gear-wheel-out-1</title></circle>
-<rect x="120" y="216" width="288" height="96" fill="#cfe3f7" stroke="#333" opacity="0.9"/>
-<text x="123.60000000000001" y="228" font-size="10">logistic-science-pack</text>
-<circle cx="126.0" cy="234.0" r="4" fill="#1f77b4"><title>logistic-science-pack.inserter-in</title></circle>
-<circle cx="126.0" cy="222.0" r="4" fill="#1f77b4"><title>logistic-science-pack.transport-belt-in</title></circle>
-<circle cx="402.0" cy="306.0" r="4" fill="#d62728"><title>logistic-science-pack.logistic-science-pack-out-0</title></circle>
-<rect x="444" y="228" width="36" height="96" fill="#cfe3f7" stroke="#333" opacity="0.9"/>
-<text x="447.59999999999997" y="240" font-size="10">transport-belt</text>
-<circle cx="450.0" cy="246.0" r="4" fill="#1f77b4"><title>transport-belt.iron-plate-in</title></circle>
-<circle cx="450.0" cy="234.0" r="4" fill="#1f77b4"><title>transport-belt.iron-gear-wheel-in</title></circle>
-<circle cx="474.0" cy="318.0" r="4" fill="#d62728"><title>transport-belt.transport-belt-out-0</title></circle>
-<rect x="0" y="264" width="24" height="12" fill="#d9f2d9" stroke="#333" opacity="0.9"/>
-<text x="3.5999999999999996" y="276" font-size="10">in-copper-plate</text>
-<circle cx="18.0" cy="270.0" r="4" fill="#d62728"><title>in-copper-plate.copper-plate-out-0</title></circle>
-<rect x="0" y="336" width="84" height="48" fill="#d9f2d9" stroke="#333" opacity="0.9"/>
-<text x="3.5999999999999996" y="348" font-size="10">in-iron-plate</text>
-<circle cx="78.0" cy="342.0" r="4" fill="#d62728"><title>in-iron-plate.iron-plate-out-0</title></circle>
-<circle cx="78.0" cy="354.0" r="4" fill="#d62728"><title>in-iron-plate.iron-plate-out-1</title></circle>
-<circle cx="78.0" cy="366.0" r="4" fill="#d62728"><title>in-iron-plate.iron-plate-out-2</title></circle>
-<circle cx="78.0" cy="378.0" r="4" fill="#d62728"><title>in-iron-plate.iron-plate-out-3</title></circle>
-<rect x="516" y="324" width="24" height="12" fill="#f7ddc7" stroke="#333" opacity="0.9"/>
-<text x="519.5999999999999" y="336" font-size="10">out</text>
-<circle cx="522.0" cy="330.0" r="4" fill="#1f77b4"><title>out.logistic-science-pack-in</title></circle>
-<polyline points="66.0,222.0 78.0,222.0 90.0,222.0 102.0,222.0 102.0,234.0 102.0,246.0 102.0,258.0 102.0,270.0 102.0,282.0 102.0,294.0 102.0,306.0 102.0,318.0 102.0,330.0 102.0,342.0 114.0,342.0 114.0,354.0 114.0,366.0" fill="none" stroke="#6a3d9a" stroke-width="2" opacity="0.8"><title>copper-cable:copper-cable-&gt;electronic-circuit</title></polyline>
-<polyline points="162.0,438.0 162.0,450.0 162.0,462.0 162.0,474.0 162.0,486.0 174.0,486.0 186.0,486.0 198.0,486.0 210.0,486.0 222.0,486.0 234.0,486.0 246.0,486.0 258.0,486.0 270.0,486.0 282.0,486.0 294.0,486.0 306.0,486.0 318.0,486.0 330.0,486.0 342.0,486.0 354.0,486.0 366.0,486.0 378.0,486.0 378.0,474.0 378.0,414.0 378.0,402.0 378.0,390.0 378.0,378.0" fill="none" stroke="#6a3d9a" stroke-width="2" opacity="0.8"><title>electronic-circuit:electronic-circuit-&gt;inserter</title></polyline>
-<polyline points="426.0,450.0 426.0,438.0 426.0,426.0 426.0,414.0 426.0,402.0 426.0,390.0 426.0,378.0 426.0,366.0 426.0,354.0 414.0,354.0 402.0,354.0 390.0,354.0 378.0,354.0 366.0,354.0 354.0,354.0 342.0,354.0 330.0,354.0 330.0,342.0 330.0,330.0 330.0,318.0 318.0,318.0 306.0,318.0 294.0,318.0 282.0,318.0 270.0,318.0 258.0,318.0 246.0,318.0 234.0,318.0 222.0,318.0 210.0,318.0 198.0,318.0 186.0,318.0 174.0,318.0 162.0,318.0 150.0,318.0 138.0,318.0 126.0,318.0 114.0,318.0 114.0,306.0 114.0,294.0 114.0,282.0 114.0,270.0 114.0,258.0 114.0,246.0 114.0,234.0" fill="none" stroke="#6a3d9a" stroke-width="2" opacity="0.8"><title>inserter:inserter-&gt;logistic-science-pack</title></polyline>
-<polyline points="258.0,426.0 258.0,414.0 258.0,402.0 270.0,402.0 282.0,402.0 294.0,402.0 294.0,390.0 306.0,390.0 318.0,390.0 330.0,390.0 342.0,390.0 342.0,378.0 342.0,366.0 354.0,366.0 366.0,366.0 378.0,366.0" fill="none" stroke="#6a3d9a" stroke-width="2" opacity="0.8"><title>iron-gear-wheel:iron-gear-wheel-&gt;inserter</title></polyline>
-<polyline points="258.0,438.0 270.0,438.0 282.0,438.0 294.0,438.0 306.0,438.0 318.0,438.0 330.0,438.0 342.0,438.0 354.0,438.0 366.0,438.0 366.0,450.0 378.0,450.0 438.0,450.0 450.0,450.0 462.0,450.0 474.0,450.0 486.0,450.0 498.0,450.0 510.0,450.0 522.0,450.0 522.0,438.0 522.0,426.0 522.0,414.0 522.0,402.0 522.0,390.0 522.0,378.0 522.0,366.0 522.0,354.0 522.0,342.0 522.0,282.0 522.0,270.0 522.0,258.0 522.0,246.0 522.0,234.0 522.0,222.0 510.0,222.0 498.0,222.0 486.0,222.0 474.0,222.0 462.0,222.0 450.0,222.0 438.0,222.0 438.0,234.0" fill="none" stroke="#6a3d9a" stroke-width="2" opacity="0.8"><title>iron-gear-wheel:iron-gear-wheel-&gt;transport-belt</title></polyline>
-<polyline points="414.0,306.0 414.0,318.0 426.0,318.0 438.0,318.0 438.0,330.0 450.0,330.0 462.0,330.0 474.0,330.0 486.0,330.0 498.0,330.0 510.0,330.0" fill="none" stroke="#6a3d9a" stroke-width="2" opacity="0.8"><title>logistic-science-pack:logistic-science-pack-&gt;out</title></polyline>
-<polyline points="486.0,318.0 498.0,318.0 498.0,306.0 498.0,294.0 498.0,282.0 498.0,270.0 498.0,258.0 486.0,258.0 438.0,258.0 426.0,258.0 414.0,258.0 414.0,246.0 414.0,234.0 414.0,222.0 414.0,210.0 402.0,210.0 390.0,210.0 378.0,210.0 366.0,210.0 354.0,210.0 342.0,210.0 330.0,210.0 318.0,210.0 306.0,210.0 294.0,210.0 282.0,210.0 270.0,210.0 258.0,210.0 246.0,210.0 234.0,210.0 222.0,210.0 210.0,210.0 198.0,210.0 186.0,210.0 174.0,210.0 162.0,210.0 150.0,210.0 138.0,210.0 126.0,210.0 114.0,210.0 114.0,222.0" fill="none" stroke="#6a3d9a" stroke-width="2" opacity="0.8"><title>transport-belt:transport-belt-&gt;logistic-science-pack</title></polyline>
-<polyline points="30.0,270.0 30.0,258.0 30.0,246.0 30.0,234.0 18.0,234.0 18.0,222.0 18.0,210.0 18.0,198.0 18.0,186.0 18.0,174.0 18.0,162.0 18.0,150.0" fill="none" stroke="#6a3d9a" stroke-width="2" opacity="0.8"><title>copper-plate:in-&gt;copper-cable</title></polyline>
-<polyline points="90.0,342.0 90.0,330.0 90.0,318.0 78.0,318.0 66.0,318.0 66.0,330.0 66.0,390.0 66.0,402.0 66.0,414.0 78.0,414.0 78.0,426.0 78.0,438.0 78.0,450.0 90.0,450.0 102.0,450.0 114.0,450.0" fill="none" stroke="#6a3d9a" stroke-width="2" opacity="0.8"><title>iron-plate:in-&gt;electronic-circuit</title></polyline>
-<polyline points="90.0,354.0 102.0,354.0 138.0,354.0 150.0,354.0 162.0,354.0 162.0,366.0 162.0,378.0 162.0,390.0 162.0,402.0 162.0,414.0 162.0,426.0 174.0,426.0 186.0,426.0 186.0,438.0 186.0,450.0 186.0,462.0 198.0,462.0 210.0,462.0 222.0,462.0 234.0,462.0 246.0,462.0 258.0,462.0 270.0,462.0 282.0,462.0 294.0,462.0 306.0,462.0 318.0,462.0 330.0,462.0 342.0,462.0 354.0,462.0 366.0,462.0 378.0,462.0" fill="none" stroke="#6a3d9a" stroke-width="2" opacity="0.8"><title>iron-plate:in-&gt;inserter</title></polyline>
-<polyline points="90.0,366.0 102.0,366.0 102.0,378.0 114.0,378.0 174.0,378.0 186.0,378.0 186.0,366.0 186.0,354.0" fill="none" stroke="#6a3d9a" stroke-width="2" opacity="0.8"><title>iron-plate:in-&gt;iron-gear-wheel</title></polyline>
-<polyline points="90.0,378.0 90.0,390.0 102.0,390.0 114.0,390.0 114.0,402.0 114.0,414.0 114.0,426.0 114.0,486.0 114.0,498.0 126.0,498.0 138.0,498.0 150.0,498.0 162.0,498.0 174.0,498.0 186.0,498.0 198.0,498.0 210.0,498.0 222.0,498.0 234.0,498.0 246.0,498.0 258.0,498.0 270.0,498.0 282.0,498.0 294.0,498.0 306.0,498.0 318.0,498.0 330.0,498.0 342.0,498.0 354.0,498.0 366.0,498.0 378.0,498.0 390.0,498.0 402.0,498.0 414.0,498.0 426.0,498.0 438.0,498.0 450.0,498.0 462.0,498.0 474.0,498.0 486.0,498.0 498.0,498.0 510.0,498.0 522.0,498.0 534.0,498.0 534.0,486.0 534.0,474.0 534.0,462.0 534.0,450.0 534.0,438.0 534.0,426.0 534.0,414.0 534.0,402.0 534.0,390.0 534.0,378.0 534.0,366.0 534.0,354.0 534.0,342.0 534.0,282.0 534.0,270.0 534.0,258.0 534.0,246.0 534.0,234.0 534.0,222.0 534.0,210.0 522.0,210.0 510.0,210.0 498.0,210.0 486.0,210.0 474.0,210.0 462.0,210.0 450.0,210.0 438.0,210.0 426.0,210.0 426.0,222.0 426.0,234.0 426.0,246.0 438.0,246.0" fill="none" stroke="#6a3d9a" stroke-width="2" opacity="0.8"><title>iron-plate:in-&gt;transport-belt</title></polyline>
+<line x1="360.0" y1="408.0" x2="360.0" y2="456.0" stroke="#8abf8a" stroke-width="3.0" opacity="0.7"/>
+<line x1="360.0" y1="456.0" x2="360.0" y2="504.0" stroke="#ff9900" stroke-width="4.0" opacity="0.7"/>
+<line x1="360.0" y1="504.0" x2="360.0" y2="552.0" stroke="#ff9900" stroke-width="4.0" opacity="0.7"/>
+<rect x="12" y="60" width="84" height="36" fill="#cfe3f7" stroke="#333" opacity="0.9"/>
+<text x="15.600000000000001" y="72" font-size="10">copper-cable</text>
+<circle cx="18.0" cy="90.0" r="4" fill="#1f77b4"><title>copper-cable.copper-plate-in</title></circle>
+<circle cx="90.0" cy="66.0" r="4" fill="#d62728"><title>copper-cable.copper-cable-out-0</title></circle>
+<rect x="0" y="216" width="96" height="36" fill="#cfe3f7" stroke="#333" opacity="0.9"/>
+<text x="3.5999999999999996" y="228" font-size="10">electronic-circuit</text>
+<circle cx="90.0" cy="222.0" r="4" fill="#1f77b4"><title>electronic-circuit.copper-cable-in</title></circle>
+<circle cx="6.0" cy="222.0" r="4" fill="#1f77b4"><title>electronic-circuit.iron-plate-in</title></circle>
+<circle cx="18.0" cy="246.0" r="4" fill="#d62728"><title>electronic-circuit.electronic-circuit-out-0</title></circle>
+<rect x="132" y="252" width="108" height="36" fill="#cfe3f7" stroke="#333" opacity="0.9"/>
+<text x="135.60000000000002" y="264" font-size="10">inserter</text>
+<circle cx="222.0" cy="258.0" r="4" fill="#1f77b4"><title>inserter.electronic-circuit-in</title></circle>
+<circle cx="234.0" cy="258.0" r="4" fill="#1f77b4"><title>inserter.iron-gear-wheel-in</title></circle>
+<circle cx="138.0" cy="258.0" r="4" fill="#1f77b4"><title>inserter.iron-plate-in</title></circle>
+<circle cx="150.0" cy="282.0" r="4" fill="#d62728"><title>inserter.inserter-out-0</title></circle>
+<rect x="156" y="120" width="96" height="60" fill="#cfe3f7" stroke="#333" opacity="0.9"/>
+<text x="159.60000000000002" y="132" font-size="10">iron-gear-wheel</text>
+<circle cx="162.0" cy="174.0" r="4" fill="#1f77b4"><title>iron-gear-wheel.iron-plate-in</title></circle>
+<circle cx="234.0" cy="126.0" r="4" fill="#d62728"><title>iron-gear-wheel.iron-gear-wheel-out-0</title></circle>
+<circle cx="246.0" cy="126.0" r="4" fill="#d62728"><title>iron-gear-wheel.iron-gear-wheel-out-1</title></circle>
+<rect x="48" y="444" width="288" height="96" fill="#cfe3f7" stroke="#333" opacity="0.9"/>
+<text x="51.599999999999994" y="456" font-size="10">logistic-science-pack</text>
+<circle cx="54.0" cy="462.0" r="4" fill="#1f77b4"><title>logistic-science-pack.inserter-in</title></circle>
+<circle cx="54.0" cy="450.0" r="4" fill="#1f77b4"><title>logistic-science-pack.transport-belt-in</title></circle>
+<circle cx="330.0" cy="534.0" r="4" fill="#d62728"><title>logistic-science-pack.logistic-science-pack-out-0</title></circle>
+<rect x="0" y="144" width="96" height="36" fill="#cfe3f7" stroke="#333" opacity="0.9"/>
+<text x="3.5999999999999996" y="156" font-size="10">transport-belt</text>
+<circle cx="78.0" cy="150.0" r="4" fill="#1f77b4"><title>transport-belt.iron-plate-in</title></circle>
+<circle cx="90.0" cy="150.0" r="4" fill="#1f77b4"><title>transport-belt.iron-gear-wheel-in</title></circle>
+<circle cx="6.0" cy="174.0" r="4" fill="#d62728"><title>transport-belt.transport-belt-out-0</title></circle>
+<rect x="0" y="12" width="24" height="12" fill="#d9f2d9" stroke="#333" opacity="0.9"/>
+<text x="3.5999999999999996" y="24" font-size="10">in-copper-plate</text>
+<circle cx="18.0" cy="18.0" r="4" fill="#d62728"><title>in-copper-plate.copper-plate-out-0</title></circle>
+<rect x="0" y="324" width="84" height="48" fill="#d9f2d9" stroke="#333" opacity="0.9"/>
+<text x="3.5999999999999996" y="336" font-size="10">in-iron-plate</text>
+<circle cx="78.0" cy="330.0" r="4" fill="#d62728"><title>in-iron-plate.iron-plate-out-0</title></circle>
+<circle cx="78.0" cy="342.0" r="4" fill="#d62728"><title>in-iron-plate.iron-plate-out-1</title></circle>
+<circle cx="78.0" cy="354.0" r="4" fill="#d62728"><title>in-iron-plate.iron-plate-out-2</title></circle>
+<circle cx="78.0" cy="366.0" r="4" fill="#d62728"><title>in-iron-plate.iron-plate-out-3</title></circle>
+<rect x="336" y="228" width="24" height="12" fill="#f7ddc7" stroke="#333" opacity="0.9"/>
+<text x="339.6" y="240" font-size="10">out</text>
+<circle cx="342.0" cy="234.0" r="4" fill="#1f77b4"><title>out.logistic-science-pack-in</title></circle>
+<polyline points="90.0,54.0 102.0,54.0 102.0,66.0 102.0,78.0 102.0,90.0 102.0,102.0 90.0,102.0 90.0,114.0 90.0,126.0 90.0,186.0 90.0,198.0 90.0,210.0" fill="none" stroke="#6a3d9a" stroke-width="2" opacity="0.8"><title>copper-cable:copper-cable-&gt;electronic-circuit</title></polyline>
+<polyline points="18.0,258.0 30.0,258.0 42.0,258.0 54.0,258.0 54.0,270.0 54.0,282.0 54.0,294.0 54.0,306.0 54.0,318.0 54.0,378.0 54.0,390.0 54.0,402.0 66.0,402.0 78.0,402.0 90.0,402.0 102.0,402.0 114.0,402.0 126.0,402.0 138.0,402.0 150.0,402.0 162.0,402.0 174.0,402.0 174.0,390.0 174.0,378.0 174.0,366.0 174.0,354.0 174.0,342.0 174.0,330.0 174.0,318.0 186.0,318.0 198.0,318.0 210.0,318.0 210.0,306.0 210.0,246.0 210.0,234.0 222.0,234.0 222.0,246.0" fill="none" stroke="#6a3d9a" stroke-width="2" opacity="0.8"><title>electronic-circuit:electronic-circuit-&gt;inserter</title></polyline>
+<polyline points="150.0,294.0 162.0,294.0 174.0,294.0 186.0,294.0 198.0,294.0 210.0,294.0 222.0,294.0 222.0,306.0 222.0,318.0 222.0,330.0 210.0,330.0 198.0,330.0 186.0,330.0 186.0,342.0 186.0,354.0 186.0,366.0 186.0,378.0 186.0,390.0 186.0,402.0 186.0,414.0 186.0,426.0 174.0,426.0 162.0,426.0 150.0,426.0 138.0,426.0 126.0,426.0 114.0,426.0 102.0,426.0 90.0,426.0 78.0,426.0 66.0,426.0 54.0,426.0 42.0,426.0 30.0,426.0 18.0,426.0 18.0,438.0 18.0,450.0 18.0,462.0 30.0,462.0 42.0,462.0" fill="none" stroke="#6a3d9a" stroke-width="2" opacity="0.8"><title>inserter:inserter-&gt;logistic-science-pack</title></polyline>
+<polyline points="234.0,114.0 222.0,114.0 210.0,114.0 198.0,114.0 186.0,114.0 174.0,114.0 162.0,114.0 150.0,114.0 138.0,114.0 126.0,114.0 126.0,126.0 126.0,138.0 126.0,150.0 126.0,162.0 126.0,174.0 126.0,186.0 126.0,198.0 126.0,210.0 138.0,210.0 174.0,210.0 186.0,210.0 198.0,210.0 210.0,210.0 222.0,210.0 234.0,210.0 234.0,222.0 234.0,234.0 234.0,246.0" fill="none" stroke="#6a3d9a" stroke-width="2" opacity="0.8"><title>iron-gear-wheel:iron-gear-wheel-&gt;inserter</title></polyline>
+<polyline points="246.0,114.0 258.0,114.0 270.0,114.0 270.0,102.0 270.0,90.0 270.0,78.0 270.0,66.0 258.0,66.0 246.0,66.0 234.0,66.0 222.0,66.0 210.0,66.0 198.0,66.0 186.0,66.0 174.0,66.0 162.0,66.0 150.0,66.0 138.0,66.0 126.0,66.0 114.0,66.0 114.0,78.0 114.0,90.0 114.0,102.0 114.0,114.0 114.0,126.0 114.0,138.0 102.0,138.0 90.0,138.0" fill="none" stroke="#6a3d9a" stroke-width="2" opacity="0.8"><title>iron-gear-wheel:iron-gear-wheel-&gt;transport-belt</title></polyline>
+<polyline points="342.0,534.0 342.0,522.0 342.0,510.0 342.0,498.0 342.0,486.0 342.0,474.0 342.0,462.0 342.0,450.0 342.0,438.0 342.0,426.0 342.0,414.0 342.0,402.0 342.0,390.0 342.0,378.0 342.0,366.0 342.0,354.0 342.0,342.0 342.0,330.0 342.0,318.0 342.0,306.0 342.0,294.0 342.0,282.0 342.0,270.0 342.0,258.0 342.0,246.0 330.0,246.0 330.0,234.0" fill="none" stroke="#6a3d9a" stroke-width="2" opacity="0.8"><title>logistic-science-pack:logistic-science-pack-&gt;out</title></polyline>
+<polyline points="6.0,186.0 6.0,198.0 18.0,198.0 18.0,186.0 18.0,138.0 18.0,126.0 30.0,126.0 42.0,126.0 42.0,114.0 42.0,54.0 42.0,42.0 54.0,42.0 66.0,42.0 78.0,42.0 90.0,42.0 102.0,42.0 114.0,42.0 126.0,42.0 138.0,42.0 150.0,42.0 162.0,42.0 174.0,42.0 186.0,42.0 198.0,42.0 210.0,42.0 222.0,42.0 234.0,42.0 246.0,42.0 258.0,42.0 270.0,42.0 282.0,42.0 294.0,42.0 294.0,54.0 294.0,66.0 294.0,78.0 294.0,90.0 294.0,102.0 294.0,114.0 294.0,126.0 294.0,138.0 294.0,150.0 294.0,162.0 294.0,174.0 294.0,186.0 294.0,198.0 294.0,210.0 294.0,222.0 294.0,234.0 294.0,246.0 294.0,258.0 294.0,270.0 294.0,282.0 294.0,294.0 294.0,306.0 294.0,318.0 294.0,330.0 294.0,342.0 294.0,354.0 294.0,366.0 294.0,378.0 294.0,390.0 294.0,402.0 294.0,414.0 294.0,426.0 294.0,438.0 282.0,438.0 270.0,438.0 258.0,438.0 246.0,438.0 234.0,438.0 222.0,438.0 210.0,438.0 198.0,438.0 186.0,438.0 174.0,438.0 162.0,438.0 150.0,438.0 138.0,438.0 126.0,438.0 114.0,438.0 102.0,438.0 90.0,438.0 78.0,438.0 66.0,438.0 54.0,438.0 42.0,438.0 42.0,450.0" fill="none" stroke="#6a3d9a" stroke-width="2" opacity="0.8"><title>transport-belt:transport-belt-&gt;logistic-science-pack</title></polyline>
+<polyline points="30.0,18.0 30.0,30.0 30.0,42.0 30.0,54.0 18.0,54.0 6.0,54.0 6.0,66.0 6.0,78.0 6.0,90.0 6.0,102.0 18.0,102.0" fill="none" stroke="#6a3d9a" stroke-width="2" opacity="0.8"><title>copper-plate:in-&gt;copper-cable</title></polyline>
+<polyline points="90.0,330.0 90.0,318.0 78.0,318.0 78.0,306.0 78.0,294.0 78.0,282.0 78.0,270.0 78.0,258.0 78.0,198.0 78.0,186.0 66.0,186.0 54.0,186.0 54.0,198.0 54.0,210.0 42.0,210.0 30.0,210.0 18.0,210.0 6.0,210.0" fill="none" stroke="#6a3d9a" stroke-width="2" opacity="0.8"><title>iron-plate:in-&gt;electronic-circuit</title></polyline>
+<polyline points="90.0,342.0 102.0,342.0 102.0,330.0 102.0,318.0 102.0,306.0 102.0,294.0 102.0,282.0 102.0,270.0 102.0,258.0 102.0,246.0 114.0,246.0 126.0,246.0 138.0,246.0" fill="none" stroke="#6a3d9a" stroke-width="2" opacity="0.8"><title>iron-plate:in-&gt;inserter</title></polyline>
+<polyline points="90.0,354.0 102.0,354.0 114.0,354.0 114.0,342.0 114.0,330.0 114.0,318.0 126.0,318.0 138.0,318.0 138.0,306.0 138.0,294.0 138.0,234.0 138.0,222.0 150.0,222.0 150.0,210.0 150.0,198.0 150.0,186.0 162.0,186.0" fill="none" stroke="#6a3d9a" stroke-width="2" opacity="0.8"><title>iron-plate:in-&gt;iron-gear-wheel</title></polyline>
+<polyline points="90.0,366.0 90.0,378.0 90.0,390.0 78.0,390.0 66.0,390.0 66.0,378.0 66.0,318.0 66.0,306.0 66.0,294.0 66.0,282.0 66.0,270.0 66.0,210.0 66.0,198.0 66.0,138.0 66.0,126.0 78.0,126.0 78.0,138.0" fill="none" stroke="#6a3d9a" stroke-width="2" opacity="0.8"><title>iron-plate:in-&gt;transport-belt</title></polyline>
 </svg>

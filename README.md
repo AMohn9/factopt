@@ -96,7 +96,10 @@ Optimizer components:
 - [x] `master` — CP-SAT placement (margin-inflated no-overlap, edge pins, port
   clearance) with a two-stage lexicographic objective (bbox area, then
   rate-weighted flow distance + coarse congestion), plus per-net coarse unit
-  flows with placement-dependent boundary capacities.
+  flows with placement-dependent boundary capacities. Macros also get a
+  **quarter-turn orientation variable** (`macros.cell.rotated`): bands can face
+  any direction, with ports, lanes, inserters, and coarse capacities rotating
+  consistently (edge-pinned I/O macros stay fixed).
 - [x] `routing.multinet` — PathFinder-style negotiated congestion (present +
   history costs), targeted rip-up for stragglers, underground cross-capture
   avoidance, and structured `RoutingFailure`s.
@@ -135,7 +138,7 @@ Dense placers (interior placement only — no boundary I/O yet):
 |------|------------------|-----------|-------|
 | Green circuits 5/s | `compact` | 15×14 = 210t | shared-lane |
 | Green circuits 30/s | `compact` | 92×14 = 1288t | 2 tiled sub-blocks |
-| Green science 1/s | `line` | 41×23 = 943t | `benders` also routes it (~1100–2000t, varies by run) |
+| Green science 1/s | `line` | 41×23 = 943t | `benders` also routes it (~1040–1400t with rotation, varies by run) |
 
 `line` still wins green science on footprint; `benders` is the only strategy
 with no structural layout assumptions, and its footprint is expected to drop

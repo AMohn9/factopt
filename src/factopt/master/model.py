@@ -1,8 +1,10 @@
-"""CP-SAT master problem: macro placement (M2) + optional coarse routing (M3).
+"""CP-SAT master problem: macro placement + orientation + coarse routing.
 
 Places every macro of a :class:`~factopt.macros.library.MacroProblem` on an
 integer tile grid with pairwise no-overlap (inflated by a routing margin),
-honors west/east edge pins, and optimizes lexicographically via two solves:
+chooses a quarter-turn **orientation** per macro (edge-pinned I/O macros stay
+in their authored orientation), honors west/east edge pins, and optimizes
+lexicographically via two solves:
 
 1. bounding-box area (optionally relaxed by ``area_slack``),
 2. flow-weighted Manhattan distance between each net's ports
@@ -20,7 +22,7 @@ from typing import TYPE_CHECKING
 
 from ortools.sat.python import cp_model
 
-from factopt.macros.cell import PlacedMacro
+from factopt.macros.cell import _SIDE_VEC, MacroCell, PlacedMacro, rotated
 from factopt.macros.library import MacroProblem
 
 if TYPE_CHECKING:
@@ -69,6 +71,39 @@ class MasterVars:
     bbox_h: cp_model.IntVar
     max_w: int
     max_h: int
+    # Orientation: per macro, the 4 rotated cell variants, one bool per
+    # variant (exactly one true), an index channel, and w/h as IntVars.
+    cells: dict[str, list[MacroCell]] = field(default_factory=dict)
+    orient: dict[str, list[cp_model.IntVar]] = field(default_factory=dict)
+    o_idx: dict[str, cp_model.IntVar] = field(default_factory=dict)
+    w: dict[str, cp_model.IntVar] = field(default_factory=dict)
+    h: dict[str, cp_model.IntVar] = field(default_factory=dict)
+
+    def port_exprs(self, macro_id: str, port_id: str):
+        """(x, y) linear expressions of a port's tile under the chosen
+        orientation."""
+        ob = self.orient[macro_id]
+        px = self.x[macro_id] + sum(
+            ob[k] * self.cells[macro_id][k].port(port_id).local_position[0]
+            for k in range(4)
+        )
+        py = self.y[macro_id] + sum(
+            ob[k] * self.cells[macro_id][k].port(port_id).local_position[1]
+            for k in range(4)
+        )
+        return px, py
+
+    def port_access_exprs(self, macro_id: str, port_id: str):
+        """(x, y) linear expressions of a port's access tile (just outside
+        the footprint) under the chosen orientation."""
+        ob = self.orient[macro_id]
+        terms_x, terms_y = [], []
+        for k in range(4):
+            p = self.cells[macro_id][k].port(port_id)
+            dx, dy = _SIDE_VEC[p.side]
+            terms_x.append(ob[k] * (p.local_position[0] + dx))
+            terms_y.append(ob[k] * (p.local_position[1] + dy))
+        return self.x[macro_id] + sum(terms_x), self.y[macro_id] + sum(terms_y)
 
 
 def default_bounds(problem: MacroProblem, margin: int) -> tuple[int, int]:
@@ -94,51 +129,91 @@ def _build_placement(
         max_w = max_w if max_w is not None else dw
         max_h = max_h if max_h is not None else dh
 
-    x = {mid: model.new_int_var(0, max_w - m.width, f"x_{mid}") for mid, m in macros.items()}
-    y = {mid: model.new_int_var(0, max_h - m.height, f"y_{mid}") for mid, m in macros.items()}
+    max_dim = max(max_w, max_h)
+    x = {mid: model.new_int_var(0, max_w, f"x_{mid}") for mid in macros}
+    y = {mid: model.new_int_var(0, max_h, f"y_{mid}") for mid in macros}
     bbox_w = model.new_int_var(1, max_w, "bbox_w")
     bbox_h = model.new_int_var(1, max_h, "bbox_h")
 
+    # Orientation: 4 rotated variants per macro; edge-pinned I/O macros keep
+    # their authored orientation (their contract is a fixed boundary side).
+    cells: dict[str, list[MacroCell]] = {}
+    orient: dict[str, list[cp_model.IntVar]] = {}
+    o_idx: dict[str, cp_model.IntVar] = {}
+    w: dict[str, cp_model.IntVar] = {}
+    h: dict[str, cp_model.IntVar] = {}
+    for mid, m in macros.items():
+        cells[mid] = [rotated(m, k) for k in range(4)]
+        ob = [model.new_bool_var(f"o_{mid}_{k}") for k in range(4)]
+        model.add_exactly_one(ob)
+        oi = model.new_int_var(0, 3, f"oi_{mid}")
+        model.add(oi == sum(k * ob[k] for k in range(4)))
+        if mid in problem.pins:
+            model.add(oi == 0)
+        wm = model.new_int_var(1, max_dim, f"w_{mid}")
+        hm = model.new_int_var(1, max_dim, f"h_{mid}")
+        model.add(wm == sum(ob[k] * cells[mid][k].width for k in range(4)))
+        model.add(hm == sum(ob[k] * cells[mid][k].height for k in range(4)))
+        orient[mid], o_idx[mid], w[mid], h[mid] = ob, oi, wm, hm
+
     # No-overlap with a `margin`-tile separation: inflate each rectangle.
     xi, yi = [], []
-    for mid, m in macros.items():
-        xi.append(model.new_fixed_size_interval_var(x[mid], m.width + margin, f"xi_{mid}"))
-        yi.append(model.new_fixed_size_interval_var(y[mid], m.height + margin, f"yi_{mid}"))
+    for mid in macros:
+        xe = model.new_int_var(0, max_w + max_dim + margin, f"xe_{mid}")
+        ye = model.new_int_var(0, max_h + max_dim + margin, f"ye_{mid}")
+        model.add(xe == x[mid] + w[mid] + margin)
+        model.add(ye == y[mid] + h[mid] + margin)
+        xi.append(model.new_interval_var(x[mid], w[mid] + margin, xe, f"xi_{mid}"))
+        yi.append(model.new_interval_var(y[mid], h[mid] + margin, ye, f"yi_{mid}"))
     model.add_no_overlap_2d(xi, yi)
 
     # Inside the bounding box.
-    for mid, m in macros.items():
-        model.add(x[mid] + m.width <= bbox_w)
-        model.add(y[mid] + m.height <= bbox_h)
+    for mid in macros:
+        model.add(x[mid] + w[mid] <= bbox_w)
+        model.add(y[mid] + h[mid] <= bbox_h)
 
     # Port clearance: a port's access tile must stay inside the bounding box
     # with one extra tile beyond it, so a route can approach the mouth from
     # the side instead of only straight down a 1-wide dead-end corridor.
+    # Sides depend on the chosen orientation, so guard per variant.
     for mid, m in macros.items():
         pinned = problem.pins.get(mid)
-        sides = {p.side for p in m.ports}
-        if "west" in sides and pinned != "west":
-            model.add(x[mid] >= 2)
-        if "east" in sides and pinned != "east":
-            model.add(x[mid] + m.width + 2 <= bbox_w)
-        if "north" in sides and pinned != "north":
-            model.add(y[mid] >= 2)
-        if "south" in sides and pinned != "south":
-            model.add(y[mid] + m.height + 2 <= bbox_h)
+        for k in range(4):
+            sides = {p.side for p in cells[mid][k].ports}
+            ck = cells[mid][k]
+            if "west" in sides and pinned != "west":
+                model.add(x[mid] >= 2).only_enforce_if(orient[mid][k])
+            if "east" in sides and pinned != "east":
+                model.add(x[mid] + ck.width + 2 <= bbox_w).only_enforce_if(orient[mid][k])
+            if "north" in sides and pinned != "north":
+                model.add(y[mid] >= 2).only_enforce_if(orient[mid][k])
+            if "south" in sides and pinned != "south":
+                model.add(y[mid] + ck.height + 2 <= bbox_h).only_enforce_if(orient[mid][k])
 
     # Edge pins: west-pinned macros hug x=0, east-pinned hug the east edge.
     for mid, side in problem.pins.items():
         if side == "west":
             model.add(x[mid] == 0)
         elif side == "east":
-            model.add(x[mid] + macros[mid].width == bbox_w)
+            model.add(x[mid] + w[mid] == bbox_w)
         elif side == "north":
             model.add(y[mid] == 0)
         elif side == "south":
-            model.add(y[mid] + macros[mid].height == bbox_h)
+            model.add(y[mid] + h[mid] == bbox_h)
 
     return MasterVars(
-        model=model, x=x, y=y, bbox_w=bbox_w, bbox_h=bbox_h, max_w=max_w, max_h=max_h
+        model=model,
+        x=x,
+        y=y,
+        bbox_w=bbox_w,
+        bbox_h=bbox_h,
+        max_w=max_w,
+        max_h=max_h,
+        cells=cells,
+        orient=orient,
+        o_idx=o_idx,
+        w=w,
+        h=h,
     )
 
 
@@ -152,12 +227,8 @@ def _flow_distance_expr(problem: MacroProblem, v: MasterVars):
     terms = []
     span = v.max_w + v.max_h
     for net in problem.nets:
-        sp = problem.macros[net.source_macro].port(net.source_port).local_position
-        dp = problem.macros[net.sink_macro].port(net.sink_port).local_position
-        sx = v.x[net.source_macro] + sp[0]
-        sy = v.y[net.source_macro] + sp[1]
-        tx = v.x[net.sink_macro] + dp[0]
-        ty = v.y[net.sink_macro] + dp[1]
+        sx, sy = v.port_exprs(net.source_macro, net.source_port)
+        tx, ty = v.port_exprs(net.sink_macro, net.sink_port)
         ax = model.new_int_var(0, span, f"ax_{net.id}")
         ay = model.new_int_var(0, span, f"ay_{net.id}")
         model.add_abs_equality(ax, sx - tx)
@@ -238,10 +309,15 @@ def solve_master(
     if st2 not in ("OPTIMAL", "FEASIBLE"):
         s2, st2 = s1, st1  # tight time limits can starve stage 2; keep stage 1
 
-    placements = {
-        mid: PlacedMacro(cell=m, x=s2.value(v.x[mid]), y=s2.value(v.y[mid]))
-        for mid, m in problem.macros.items()
-    }
+    placements = {}
+    for mid in problem.macros:
+        k = s2.value(v.o_idx[mid])
+        placements[mid] = PlacedMacro(
+            cell=v.cells[mid][k],
+            x=s2.value(v.x[mid]),
+            y=s2.value(v.y[mid]),
+            orientation=k,
+        )
     sol = MasterSolution(
         status=st2,
         placements=placements,

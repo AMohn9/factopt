@@ -120,14 +120,14 @@ def add_coarse_routing(problem: MacroProblem, v: MasterVars, cell: int = 4) -> C
             by = c2[1] * cell
             r0, r1 = c1[0] * cell, (c1[0] + 1) * cell
 
-        for mid, m in problem.macros.items():
+        for mid in problem.macros:
             if vertical:
-                pos, span = v.x[mid], m.width
-                perp, perp_span = v.y[mid], m.height
+                pos, span = v.x[mid], v.w[mid]
+                perp, perp_span = v.y[mid], v.h[mid]
                 b = bx
             else:
-                pos, span = v.y[mid], m.height
-                perp, perp_span = v.x[mid], m.width
+                pos, span = v.y[mid], v.h[mid]
+                perp, perp_span = v.x[mid], v.w[mid]
                 b = by
             tag = f"blk_{mid}_{c1}_{c2}"
             # spans == (pos <= b-1 AND pos+span >= b+1), via two half reifications.
@@ -141,8 +141,9 @@ def add_coarse_routing(problem: MacroProblem, v: MasterVars, cell: int = 4) -> C
             model.add_multiplication_equality(spans, [lo, hi])
 
             # Overlap of the macro with the boundary's row/column range.
-            lo_e = model.new_int_var(0, max(v.max_w, v.max_h), f"{tag}_l")
-            hi_e = model.new_int_var(0, max(v.max_w, v.max_h) + max(span, perp_span), f"{tag}_h")
+            max_dim = max(v.max_w, v.max_h)
+            lo_e = model.new_int_var(0, max_dim, f"{tag}_l")
+            hi_e = model.new_int_var(0, 2 * max_dim, f"{tag}_h")
             model.add_max_equality(lo_e, [perp, r0])
             model.add_min_equality(hi_e, [perp + perp_span, r1])
             ov = model.new_int_var(0, cell, f"{tag}_ov")
@@ -188,13 +189,14 @@ def add_coarse_routing(problem: MacroProblem, v: MasterVars, cell: int = 4) -> C
             model.add(f <= inbox[a[1]])
             flow[(net.id, a)] = f
 
-        # Coarse cell of each endpoint port, as a function of placement.
+        # Coarse cell of each endpoint port, as a function of placement and
+        # orientation.
         def _port_cell(macro_id: str, port_id: str, tag: str):
-            p = problem.macros[macro_id].port(port_id)
+            px_expr, py_expr = v.port_exprs(macro_id, port_id)
             px = model.new_int_var(0, v.max_w, f"{tag}_px")
             py = model.new_int_var(0, v.max_h, f"{tag}_py")
-            model.add(px == v.x[macro_id] + p.local_position[0])
-            model.add(py == v.y[macro_id] + p.local_position[1])
+            model.add(px == px_expr)
+            model.add(py == py_expr)
             ci = model.new_int_var(0, cols - 1, f"{tag}_ci")
             cj = model.new_int_var(0, rows - 1, f"{tag}_cj")
             model.add_division_equality(ci, px, cell)

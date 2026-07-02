@@ -24,7 +24,18 @@ from factopt.routing.multinet import RoutingResult, route_nets
 from factopt.validate import ValidationReport, validate
 
 # (margin, area_slack) per iteration; repeats the last entry when exhausted.
-_SCHEDULE = [(1, 0.0), (1, 0.15), (2, 0.15), (2, 0.3), (3, 0.3), (3, 0.5)]
+# Orientation freedom lets the master keep finding fresh tight-but-congested
+# layouts at a given margin, so the ladder ends in a roomy fallback.
+_SCHEDULE = [
+    (1, 0.0),
+    (1, 0.15),
+    (2, 0.15),
+    (2, 0.3),
+    (3, 0.3),
+    (3, 0.5),
+    (4, 0.5),
+    (4, 0.7),
+]
 
 
 @dataclass

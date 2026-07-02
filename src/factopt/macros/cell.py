@@ -6,10 +6,10 @@ top-left tile), and :class:`PortCandidate` s -- the tiles where item flows
 enter or leave the cell. Placement decides ``(x, y)`` for each cell; routing
 connects ports with belts.
 
-Orientation is deliberately not modeled yet: the first macro library (recipe
-bands) is direction-baked (lanes flow EAST, inserters point N/S), so every
-macro is placed axis-aligned as authored. The master reserves an orientation
-hook for later.
+Cells are authored in one canonical orientation (bands: lanes flow EAST,
+inserters point N/S); :func:`rotated` produces the quarter-turn variants
+(entities, ports, and flow directions all rotate together), and the master
+chooses an orientation per macro.
 
 Coordinate conventions match the rest of factopt: integer tile coords, ``y``
 grows downward (SOUTH), entity positions are tile centers.
@@ -75,11 +75,64 @@ class MacroCell:
         return [p for p in self.ports if p.item == item and p.direction == direction]
 
 
+_SIDE_CW: dict[Side, Side] = {
+    "north": "east",
+    "east": "south",
+    "south": "west",
+    "west": "north",
+}
+
+
+def rotated(cell: MacroCell, quarter_turns: int) -> MacroCell:
+    """``cell`` rotated ``quarter_turns`` x 90 degrees clockwise.
+
+    Entity centers transform as (px, py) -> (h - py, px) per turn (verified
+    for 1x1, WxH machines, and 2-tile splitters); directions advance by 4 in
+    Factorio's 16-way enum; port tiles, sides, and flow directions rotate in
+    lockstep so the cell stays internally consistent.
+    """
+    k = quarter_turns % 4
+    for _ in range(k):
+        h = cell.height
+        entities = tuple(
+            Entity(
+                name=e.name,
+                position=Position(h - e.position.y, e.position.x),
+                direction=(e.direction + 4) % 16,
+                recipe=e.recipe,
+                extra=dict(e.extra),
+            )
+            for e in cell.entities
+        )
+        ports = tuple(
+            PortCandidate(
+                id=p.id,
+                item=p.item,
+                direction=p.direction,
+                side=_SIDE_CW[p.side],
+                local_position=(h - 1 - p.local_position[1], p.local_position[0]),
+                flow_entry_dir=(p.flow_entry_dir + 4) % 16,
+                max_rate_per_sec=p.max_rate_per_sec,
+            )
+            for p in cell.ports
+        )
+        cell = MacroCell(
+            id=cell.id,
+            kind=cell.kind,
+            width=cell.height,
+            height=cell.width,
+            entities=entities,
+            ports=ports,
+        )
+    return cell
+
+
 @dataclass(frozen=True)
 class PlacedMacro:
-    cell: MacroCell
+    cell: MacroCell  # already rotated to ``orientation``
     x: int
     y: int
+    orientation: int = 0  # quarter turns clockwise from the authored cell
 
     @property
     def id(self) -> str:

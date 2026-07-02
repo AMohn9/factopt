@@ -76,7 +76,9 @@ def explain_failures(
     belt: str = "transport-belt",
 ) -> list[BendersCut]:
     cuts: list[BendersCut] = []
-    pos = {mid: (pm.x, pm.y) for mid, pm in solution.placements.items()}
+    pos = {
+        mid: (pm.x, pm.y, pm.orientation) for mid, pm in solution.placements.items()
+    }
 
     for f in result.failures:
         if f.kind == "port_conflict" and len(f.ports) == 2:

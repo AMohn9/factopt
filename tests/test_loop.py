@@ -154,7 +154,11 @@ def test_loop_never_repeats_a_cut_placement(gs_loop):
                 if not later.master.ok:
                     continue
                 same = all(
-                    (later.master.placements[mid].x, later.master.placements[mid].y)
+                    (
+                        later.master.placements[mid].x,
+                        later.master.placements[mid].y,
+                        later.master.placements[mid].orientation,
+                    )[: len(tuple(p))]
                     == tuple(p)
                     for mid, p in forbidden.items()
                 )
