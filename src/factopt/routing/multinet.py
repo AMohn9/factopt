@@ -26,17 +26,18 @@ from factopt.master.model import MasterSolution
 from factopt.model.blueprint import Entity
 from factopt.routing.astar import BeltRoute, Grid, route_belt
 
-_MAX_ROUNDS = 12
+_MAX_ROUNDS = 24
 _PRESENT_BASE = 6.0  # cost per other-net occupant of a tile, round 0
-_PRESENT_GROWTH = 1.6
-_HISTORY_INC = 1.5
+_PRESENT_GROWTH = 1.5
+_HISTORY_INC = 2.0
+_MOUTH_COST = 40.0  # foreign port access tiles: strongly discouraged, not walls
 _OFF_COARSE_COST = 0.4  # mild pull toward the master's coarse route
 _TURN_PENALTY = 0.3
 
 
 @dataclass(frozen=True)
 class RoutingFailure:
-    kind: str  # "no_path" | "congestion" | "port_blocked"
+    kind: str  # "no_path" | "congestion" | "port_blocked" | "port_conflict"
     net_id: str
     item: str
     source_macro: str
@@ -44,6 +45,9 @@ class RoutingFailure:
     start: tuple[int, int] | None = None
     goal: tuple[int, int] | None = None
     contested_tiles: frozenset[tuple[int, int]] = frozenset()
+    # (macro_id, port_id) pairs involved, e.g. the two ports whose access
+    # tiles coincide for a port_conflict.
+    ports: tuple[tuple[str, str], ...] = ()
 
     def __str__(self) -> str:
         return (
@@ -110,6 +114,7 @@ def route_nets(
     nets: list[_Net] = []
     failures: list[RoutingFailure] = []
     reserved: set[tuple[int, int]] = set()
+    tile_owner: dict[tuple[int, int], tuple[str, str, str]] = {}  # tile -> net, macro, port
     for net in problem.nets:
         src_pm = solution.placements[net.source_macro]
         dst_pm = solution.placements[net.sink_macro]
@@ -138,6 +143,32 @@ def route_nets(
                 )
             )
             continue
+        # Two ports whose access tiles coincide can never both be served.
+        conflict = None
+        for tile, owner in (
+            (start, (net.id, net.source_macro, net.source_port)),
+            (goal, (net.id, net.sink_macro, net.sink_port)),
+        ):
+            if tile in tile_owner and tile_owner[tile][0] != net.id:
+                conflict = (tile, tile_owner[tile], owner)
+                break
+            tile_owner[tile] = owner
+        if conflict is not None:
+            tile, other, mine = conflict
+            failures.append(
+                RoutingFailure(
+                    kind="port_conflict",
+                    net_id=net.id,
+                    item=net.item,
+                    source_macro=net.source_macro,
+                    sink_macro=net.sink_macro,
+                    start=start,
+                    goal=goal,
+                    contested_tiles=frozenset({tile}),
+                    ports=((other[1], other[2]), (mine[1], mine[2])),
+                )
+            )
+            continue
         nets.append(record)
         reserved.add(start)
         reserved.add(goal)
@@ -159,6 +190,8 @@ def route_nets(
     rounds_used = 0
 
     def make_grid(active: _Net) -> Grid:
+        # Foreign port mouths hold those nets' fixed endpoint belts: hard
+        # obstacles, since negotiation can never move an endpoint.
         blocked = set(static_blocked)
         blocked |= reserved - {active.start, active.goal}
         return Grid(width=width, height=height, blocked=blocked)

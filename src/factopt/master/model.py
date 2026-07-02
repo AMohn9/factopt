@@ -111,19 +111,20 @@ def _build_placement(
         model.add(x[mid] + m.width <= bbox_w)
         model.add(y[mid] + m.height <= bbox_h)
 
-    # Port clearance: every port's access tile must stay inside the bounding
-    # box (a west port one tile from x=0 would be unreachable).
+    # Port clearance: a port's access tile must stay inside the bounding box
+    # with one extra tile beyond it, so a route can approach the mouth from
+    # the side instead of only straight down a 1-wide dead-end corridor.
     for mid, m in macros.items():
         pinned = problem.pins.get(mid)
         sides = {p.side for p in m.ports}
         if "west" in sides and pinned != "west":
-            model.add(x[mid] >= 1)
+            model.add(x[mid] >= 2)
         if "east" in sides and pinned != "east":
-            model.add(x[mid] + m.width + 1 <= bbox_w)
+            model.add(x[mid] + m.width + 2 <= bbox_w)
         if "north" in sides and pinned != "north":
-            model.add(y[mid] >= 1)
+            model.add(y[mid] >= 2)
         if "south" in sides and pinned != "south":
-            model.add(y[mid] + m.height + 1 <= bbox_h)
+            model.add(y[mid] + m.height + 2 <= bbox_h)
 
     # Edge pins: west-pinned macros hug x=0, east-pinned hug the east edge.
     for mid, side in problem.pins.items():
