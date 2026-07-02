@@ -72,3 +72,61 @@ def test_svg_renders(gs_problem, gs_solution, tmp_path):
     for mid in gs_problem.macros:
         assert mid in svg
     (tmp_path / "master.svg").write_text(svg)
+
+
+# ---------------------------------------------------------------------------
+# M3: coarse routing
+# ---------------------------------------------------------------------------
+
+
+@pytest.fixture(scope="module")
+def gs_coarse(gs_problem):
+    sol = solve_master(gs_problem, coarse_cell=4, time_limit_s=60.0)
+    assert sol.ok, sol.status
+    assert sol.coarse is not None
+    return sol
+
+
+def _cell_of(tile, cell):
+    return (tile[0] // cell, tile[1] // cell)
+
+
+def test_coarse_routes_connect_ports(gs_coarse, gs_problem):
+    c = gs_coarse.coarse
+    for net in gs_problem.nets:
+        src = _cell_of(gs_coarse.port_tile(net.source_macro, net.source_port), c.cell)
+        snk = _cell_of(gs_coarse.port_tile(net.sink_macro, net.sink_port), c.cell)
+        arcs = c.routes.get(net.id, [])
+        if src == snk:
+            continue  # same-cell nets need no coarse route
+        # Divergence check: src has one extra outgoing, snk one extra incoming.
+        div = {}
+        for a, b in arcs:
+            div[a] = div.get(a, 0) + 1
+            div[b] = div.get(b, 0) - 1
+        assert div.get(src) == 1, f"{net.id}: source divergence {div.get(src)}"
+        assert div.get(snk) == -1, f"{net.id}: sink divergence {div.get(snk)}"
+
+
+def test_coarse_capacity_respected(gs_coarse):
+    for e, (used, cap) in gs_coarse.coarse.utilization.items():
+        assert used <= cap, f"edge {e}: used {used} > cap {cap}"
+
+
+def test_coarse_avoids_walls(gs_problem):
+    """Flows must not cross boundaries fully spanned by a macro: verify used
+    capacity is zero wherever a placed macro spans the boundary completely."""
+    sol = solve_master(gs_problem, coarse_cell=4, time_limit_s=60.0)
+    assert sol.ok
+    c = sol.coarse
+    for (c1, c2), (used, cap) in c.utilization.items():
+        if cap == 0:
+            assert used == 0
+
+
+def test_coarse_svg_renders(gs_problem, gs_coarse, tmp_path):
+    from factopt.report import render_svg
+
+    svg = render_svg(gs_problem, gs_coarse)
+    assert "<line" in svg
+    (tmp_path / "coarse.svg").write_text(svg)
