@@ -1,19 +1,22 @@
 """Multi-net detailed router (M4).
 
 Given a placed master solution, routes every :class:`FlowNet` as a concrete
-belt path using PathFinder-style negotiated congestion:
+belt **tree** (one source, every sink, splitters at junctions -- see
+:mod:`factopt.routing.steiner`) using PathFinder-style negotiated congestion:
 
-* each round, every net is ripped up and re-routed with
-  :func:`~factopt.routing.astar.route_belt`, where tiles currently used by
-  other nets cost extra (present sharing) and tiles that keep being contested
-  accumulate a history cost;
+* each round, every contested net is ripped up **whole-tree** and re-grown
+  with :func:`~factopt.routing.steiner.route_tree`, where tiles currently
+  used by other nets' trees cost extra (present sharing) and tiles that keep
+  being contested accumulate a history cost;
 * the shared-tile penalty grows each round until no tile is shared;
-* a net with no path even on the otherwise-empty grid is a hard
-  ``no_path`` failure, and nets still overlapping at the round limit fail
-  with ``congestion`` -- both carry enough structure for Benders cuts.
+* a net with no tree even on the otherwise-empty grid is a hard ``no_path``
+  failure (attributed to the first unreachable sink), and nets still
+  overlapping at the round limit fail with ``congestion`` -- both carry
+  enough structure for Benders cuts.
 
-Routes start at the source port's access tile (items arrive along the port's
-flow direction) and end at the sink port's access tile facing the sink lane.
+Trees start at the source port's access tile (items arrive along the port's
+flow direction) and reach every sink port's access tile facing that sink's
+lane.
 """
 
 from __future__ import annotations
@@ -24,13 +27,12 @@ from factopt.data.database import Database
 from factopt.macros.library import FlowNet, MacroProblem
 from factopt.master.model import MasterSolution
 from factopt.model.blueprint import Entity
-from factopt.routing.astar import BeltRoute, Grid, route_belt
+from factopt.routing.steiner import BeltTree, Grid, route_tree
 
 _MAX_ROUNDS = 24
 _PRESENT_BASE = 6.0  # cost per other-net occupant of a tile, round 0
 _PRESENT_GROWTH = 1.5
 _HISTORY_INC = 2.0
-_MOUTH_COST = 40.0  # foreign port access tiles: strongly discouraged, not walls
 _OFF_COARSE_COST = 0.4  # mild pull toward the master's coarse route
 _TURN_PENALTY = 0.3
 
@@ -41,7 +43,7 @@ class RoutingFailure:
     net_id: str
     item: str
     source_macro: str
-    sink_macro: str
+    sink_macro: str  # for multi-sink nets: the sink the failure is attributed to
     start: tuple[int, int] | None = None
     goal: tuple[int, int] | None = None
     contested_tiles: frozenset[tuple[int, int]] = frozenset()
@@ -60,6 +62,7 @@ class RoutingFailure:
 class RoutingMetrics:
     total_belt_length: int = 0
     total_undergrounds: int = 0
+    total_splitters: int = 0
     total_turns: int = 0
     rounds: int = 0
 
@@ -68,9 +71,18 @@ class RoutingMetrics:
 class RoutingResult:
     feasible: bool
     entities: list[Entity] = field(default_factory=list)
-    paths: dict[str, list[tuple[int, int]]] = field(default_factory=dict)
+    # net id -> per-sink tile paths (trunk first, then each branch).
+    paths: dict[str, list[list[tuple[int, int]]]] = field(default_factory=dict)
     failures: list[RoutingFailure] = field(default_factory=list)
     metrics: RoutingMetrics = field(default_factory=RoutingMetrics)
+
+
+@dataclass
+class _Sink:
+    macro: str
+    port: str
+    goal: tuple[int, int]
+    goal_dir: int
 
 
 @dataclass
@@ -78,22 +90,49 @@ class _Net:
     net: FlowNet
     start: tuple[int, int]
     start_dir: int
-    goal: tuple[int, int]
-    goal_dir: int
-    route: BeltRoute | None = None
+    sinks: list[_Sink]
+    route: BeltTree | None = None
+    failed_sink: int | None = None  # index into sinks when routing failed
 
     @property
     def id(self) -> str:
         return self.net.id
 
+    def endpoints(self) -> set[tuple[int, int]]:
+        return {self.start} | {s.goal for s in self.sinks}
 
-def _count_turns(route: BeltRoute) -> int:
+    def hpwl(self) -> int:
+        xs = [self.start[0]] + [s.goal[0] for s in self.sinks]
+        ys = [self.start[1]] + [s.goal[1] for s in self.sinks]
+        return (max(xs) - min(xs)) + (max(ys) - min(ys))
+
+    def fail(self, kind: str, **kw) -> RoutingFailure:
+        idx = self.failed_sink if self.failed_sink is not None else 0
+        s = self.sinks[idx] if self.sinks else None
+        return RoutingFailure(
+            kind=kind,
+            net_id=self.net.id,
+            item=self.net.item,
+            source_macro=self.net.source_macro,
+            sink_macro=s.macro if s else "",
+            start=self.start,
+            goal=s.goal if s else None,
+            **kw,
+        )
+
+
+def _count_turns(tree: BeltTree) -> int:
     turns = 0
-    prev = None
-    for b in route.belts:
-        if prev is not None and b.direction != prev:
-            turns += 1
-        prev = b.direction
+    for path in tree.branch_paths:
+        prev = None
+        for t in path:
+            b = tree.belts.get(t)
+            if b is None:
+                prev = None  # splitter tile: direction preserved, reset
+                continue
+            if prev is not None and b.direction != prev:
+                turns += 1
+            prev = b.direction
     return turns
 
 
@@ -117,53 +156,51 @@ def route_nets(
     tile_owner: dict[tuple[int, int], tuple[str, str, str]] = {}  # tile -> net, macro, port
     for net in problem.nets:
         src_pm = solution.placements[net.source_macro]
-        dst_pm = solution.placements[net.sink_macro]
         sp = src_pm.cell.port(net.source_port)
-        dp = dst_pm.cell.port(net.sink_port)
         start = src_pm.port_access_tile(sp)
-        goal = dst_pm.port_access_tile(dp)
-        record = _Net(
-            net=net,
-            start=start,
-            start_dir=sp.flow_entry_dir,
-            goal=goal,
-            goal_dir=dp.flow_entry_dir,
-        )
-        in_bounds = all(0 <= t[0] < width and 0 <= t[1] < height for t in (start, goal))
-        if not in_bounds or start in static_blocked or goal in static_blocked:
-            failures.append(
-                RoutingFailure(
-                    kind="port_blocked",
-                    net_id=net.id,
-                    item=net.item,
-                    source_macro=net.source_macro,
-                    sink_macro=net.sink_macro,
-                    start=start,
-                    goal=goal,
-                )
+        sinks: list[_Sink] = []
+        for fs in net.sinks:
+            dst_pm = solution.placements[fs.macro]
+            dp = dst_pm.cell.port(fs.port)
+            sinks.append(
+                _Sink(macro=fs.macro, port=fs.port, goal=dst_pm.port_access_tile(dp),
+                      goal_dir=dp.flow_entry_dir)
             )
+        record = _Net(net=net, start=start, start_dir=sp.flow_entry_dir, sinks=sinks)
+
+        bad_tile = None
+        for t in [start] + [s.goal for s in sinks]:
+            if not (0 <= t[0] < width and 0 <= t[1] < height) or t in static_blocked:
+                bad_tile = t
+                break
+        if bad_tile is not None:
+            record.failed_sink = next(
+                (i for i, s in enumerate(sinks) if s.goal == bad_tile), 0
+            )
+            failures.append(record.fail("port_blocked"))
             continue
+
         # Two ports whose access tiles coincide can never both be served.
         conflict = None
-        for tile, owner in (
-            (start, (net.id, net.source_macro, net.source_port)),
-            (goal, (net.id, net.sink_macro, net.sink_port)),
-        ):
+        owners = [(start, (net.id, net.source_macro, net.source_port))]
+        owners += [(s.goal, (net.id, s.macro, s.port)) for s in sinks]
+        for tile, owner in owners:
             if tile in tile_owner and tile_owner[tile][0] != net.id:
+                conflict = (tile, tile_owner[tile], owner)
+                break
+            if tile in tile_owner and tile_owner[tile] != owner:
+                # Two pins of the *same* net share a mouth tile: also fatal.
                 conflict = (tile, tile_owner[tile], owner)
                 break
             tile_owner[tile] = owner
         if conflict is not None:
             tile, other, mine = conflict
+            record.failed_sink = next(
+                (i for i, s in enumerate(sinks) if s.goal == tile), 0
+            )
             failures.append(
-                RoutingFailure(
-                    kind="port_conflict",
-                    net_id=net.id,
-                    item=net.item,
-                    source_macro=net.source_macro,
-                    sink_macro=net.sink_macro,
-                    start=start,
-                    goal=goal,
+                record.fail(
+                    "port_conflict",
                     contested_tiles=frozenset({tile}),
                     ports=((other[1], other[2]), (mine[1], mine[2])),
                 )
@@ -171,10 +208,10 @@ def route_nets(
             continue
         nets.append(record)
         reserved.add(start)
-        reserved.add(goal)
+        reserved.update(s.goal for s in sinks)
 
-    # Difficulty order: heavy flows first, longer nets first.
-    nets.sort(key=lambda n: (-n.net.rate_per_sec, -(abs(n.start[0] - n.goal[0]) + abs(n.start[1] - n.goal[1]))))
+    # Difficulty order: heavy flows first, then larger pin spread first.
+    nets.sort(key=lambda n: (-n.net.rate_per_sec, -n.hpwl()))
 
     coarse_cells: dict[str, set[tuple[int, int]]] = {}
     if solution.coarse is not None:
@@ -191,9 +228,10 @@ def route_nets(
 
     def make_grid(active: _Net) -> Grid:
         # Foreign port mouths hold those nets' fixed endpoint belts: hard
-        # obstacles, since negotiation can never move an endpoint.
+        # obstacles, since negotiation can never move an endpoint. The active
+        # net's own sibling-sink mouths are managed inside route_tree.
         blocked = set(static_blocked)
-        blocked |= reserved - {active.start, active.goal}
+        blocked |= reserved - active.endpoints()
         return Grid(width=width, height=height, blocked=blocked)
 
     def tile_cost_fn(active: _Net, occupancy: dict[tuple[int, int], int]):
@@ -212,7 +250,8 @@ def route_nets(
     hard_failures: set[str] = set()
 
     def reroute(n: _Net, hard_block_others: bool) -> None:
-        """Re-route ``n`` against the other nets' current routes."""
+        """Rip up ``n``'s whole tree and re-grow it against the other nets'
+        current trees."""
         occupancy: dict[tuple[int, int], int] = {}
         ug_blocked: set[tuple[int, int, str]] = set()
         hard_tiles: set[tuple[int, int]] = set()
@@ -225,14 +264,13 @@ def route_nets(
             ug_blocked |= other.route.ug_span_tiles()
         grid = make_grid(n)
         if hard_block_others:
-            grid.blocked |= hard_tiles - {n.start, n.goal}
-        n.route = route_belt(
+            grid.blocked |= hard_tiles - n.endpoints()
+        n.route, n.failed_sink = route_tree(
             grid,
             n.start,
-            n.goal,
+            [(s.goal, s.goal_dir) for s in n.sinks],
             db,
             belt=belt,
-            goal_dir=n.goal_dir,
             start_dir=n.start_dir,
             turn_penalty=_TURN_PENALTY,
             tile_cost=tile_cost_fn(n, occupancy),
@@ -240,7 +278,7 @@ def route_nets(
         )
 
     def contested_nets() -> tuple[set[str], set[tuple[int, int]]]:
-        """Nets whose current routes share tiles (or self-cross)."""
+        """Nets whose current trees share tiles (or self-cross)."""
         tile_users: dict[tuple[int, int], list[str]] = {}
         bad: set[str] = set()
         tiles: set[tuple[int, int]] = set()
@@ -259,7 +297,7 @@ def route_nets(
         return bad, tiles
 
     # Round 0: route everyone against soft congestion costs; afterwards only
-    # rip up and re-route the nets actually in conflict, so settled routes
+    # rip up and re-grow the trees actually in conflict, so settled trees
     # stay put and pairs cannot swap channels forever.
     for n in nets:
         reroute(n, hard_block_others=False)
@@ -281,7 +319,7 @@ def route_nets(
                 if n.route is None:
                     hard_failures.add(n.id)
 
-    # Hardening fallback: if negotiation stalled, route the stragglers with
+    # Hardening fallback: if negotiation stalled, grow the stragglers with
     # everything else as hard obstacles (strict sequential completion).
     bad, _ = contested_nets()
     bad -= hard_failures
@@ -294,19 +332,18 @@ def route_nets(
                 reroute(n, hard_block_others=True)
 
     # Targeted rip-up: a straggler that still cannot route gets its ideal
-    # path (computed on the empty grid), the nets sitting on that path are
+    # tree (computed on the empty grid), the nets sitting on that tree are
     # ripped up, the straggler routes first, and the victims re-route around
     # it -- all with hard blocking so the outcome is conflict-free.
     for n in nets:
         if n.id in hard_failures or n.route is not None:
             continue
-        ideal = route_belt(
+        ideal, _failed = route_tree(
             make_grid(n),
             n.start,
-            n.goal,
+            [(s.goal, s.goal_dir) for s in n.sinks],
             db,
             belt=belt,
-            goal_dir=n.goal_dir,
             start_dir=n.start_dir,
         )
         if ideal is None:
@@ -315,7 +352,7 @@ def route_nets(
             o for o in nets if o is not n and o.route is not None
             and o.route.tiles() & ideal.tiles()
         ]
-        saved = {o.id: o.route for o in victims}
+        saved = {o.id: (o.route, o.failed_sink) for o in victims}
         for o in victims:
             o.route = None
         reroute(n, hard_block_others=True)
@@ -325,50 +362,26 @@ def route_nets(
             # Rip-up made things worse; restore the previous state.
             n.route = None
             for o in victims:
-                o.route = saved[o.id]
+                o.route, o.failed_sink = saved[o.id]
 
     # Classify what is still broken.
+    bad, _ = contested_nets()
+    bad -= hard_failures
     for n in nets:
         if n.id in hard_failures:
             continue
         if n.route is None:
-            failures.append(
-                RoutingFailure(
-                    kind="congestion" if n.id in bad else "no_path",
-                    net_id=n.id,
-                    item=n.net.item,
-                    source_macro=n.net.source_macro,
-                    sink_macro=n.net.sink_macro,
-                    start=n.start,
-                    goal=n.goal,
-                )
-            )
+            failures.append(n.fail("congestion" if n.id in bad else "no_path"))
     for n in nets:
         if n.id in hard_failures:
-            failures.append(
-                RoutingFailure(
-                    kind="no_path",
-                    net_id=n.id,
-                    item=n.net.item,
-                    source_macro=n.net.source_macro,
-                    sink_macro=n.net.sink_macro,
-                    start=n.start,
-                    goal=n.goal,
-                )
-            )
+            failures.append(n.fail("no_path"))
     remaining, remaining_tiles = contested_nets()
     remaining -= hard_failures
     for n in nets:
         if n.id in remaining:
             failures.append(
-                RoutingFailure(
-                    kind="congestion",
-                    net_id=n.id,
-                    item=n.net.item,
-                    source_macro=n.net.source_macro,
-                    sink_macro=n.net.sink_macro,
-                    start=n.start,
-                    goal=n.goal,
+                n.fail(
+                    "congestion",
                     contested_tiles=frozenset(
                         remaining_tiles & (n.route.tiles() if n.route else set())
                     ),
@@ -378,15 +391,15 @@ def route_nets(
 
     metrics = RoutingMetrics(rounds=rounds_used)
     entities: list[Entity] = []
-    paths: dict[str, list[tuple[int, int]]] = {}
+    paths: dict[str, list[list[tuple[int, int]]]] = {}
     for n in nets:
         if n.route is None:
             continue
         entities.extend(n.route.to_entities())
-        # Path in start->goal order for visualization.
-        paths[n.id] = [(b.x, b.y) for b in n.route.belts]
+        paths[n.id] = n.route.branch_paths
         metrics.total_belt_length += n.route.length
         metrics.total_undergrounds += n.route.undergrounds
+        metrics.total_splitters += len(n.route.splitters)
         metrics.total_turns += _count_turns(n.route)
 
     return RoutingResult(

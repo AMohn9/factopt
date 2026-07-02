@@ -14,11 +14,16 @@ obstacles. Two move types:
 A small penalty is charged per underground pair so the router prefers plain
 belts unless diving actually helps.
 
-Scope / fidelity notes (v1):
+The search core (:func:`_run_astar`) is seed-agnostic: it starts from any set
+of (node, cost, action) seeds and returns the action list to the goal. This is
+what lets the Steiner-tree router (:mod:`factopt.routing.steiner`) route a
+branch from *any tile of an existing tree* — it seeds the same search with one
+candidate splitter junction per straight tree belt.
 
-* This routes one commodity point-to-point. Merging/splitting multiple
-  sources or sinks for the same item needs splitters (or side-loading) and is
-  deferred; this router is the primitive the multi-net manager will call.
+Scope / fidelity notes:
+
+* :func:`route_belt` routes one commodity point-to-point; multi-sink trees
+  with splitter junctions live in :mod:`factopt.routing.steiner`.
 * Belt *directions* are emitted to point along the path. Fine-grained belt
   mechanics (side-loading, lane balancing, turning immediately after an
   underground output) are not modeled and should be validated in-game.
@@ -79,6 +84,20 @@ class PlacedBelt:
         )
 
 
+def ug_span_tiles(
+    spans: list[tuple[tuple[int, int], tuple[int, int], int]],
+) -> set[tuple[int, int, str]]:
+    """All (x, y, axis) covered by underground spans, endpoints included."""
+    out: set[tuple[int, int, str]] = set()
+    for (ix, iy), (ox, oy), d in spans:
+        axis = "h" if d in (EAST, WEST) else "v"
+        dx, dy = _DIR_VEC[d]
+        steps = max(abs(ox - ix), abs(oy - iy))
+        for k in range(steps + 1):
+            out.add((ix + k * dx, iy + k * dy, axis))
+    return out
+
+
 @dataclass
 class BeltRoute:
     belts: list[PlacedBelt]
@@ -95,15 +114,7 @@ class BeltRoute:
         return {(b.x, b.y) for b in self.belts}
 
     def ug_span_tiles(self) -> set[tuple[int, int, str]]:
-        """All (x, y, axis) covered by underground spans, endpoints included."""
-        out: set[tuple[int, int, str]] = set()
-        for (ix, iy), (ox, oy), d in self.ug_spans:
-            axis = "h" if d in (EAST, WEST) else "v"
-            dx, dy = _DIR_VEC[d]
-            steps = max(abs(ox - ix), abs(oy - iy))
-            for k in range(steps + 1):
-                out.add((ix + k * dx, iy + k * dy, axis))
-        return out
+        return ug_span_tiles(self.ug_spans)
 
     def to_entities(self) -> list[Entity]:
         return [b.to_entity() for b in self.belts]
@@ -114,11 +125,122 @@ _OPP = {NORTH: SOUTH, SOUTH: NORTH, EAST: WEST, WEST: EAST}
 # An action records what to place at a tile when reconstructing:
 #   ("belt", (x, y), out_dir)
 #   ("ug", (entrance), (exit), dir)
+# plus caller-defined seed actions (e.g. the Steiner router's splitter
+# junction), which _run_astar passes through untouched.
 _Action = tuple
 
 
 def _manhattan(a: tuple[int, int], b: tuple[int, int]) -> int:
     return abs(a[0] - b[0]) + abs(a[1] - b[1])
+
+
+def _run_astar(
+    grid: Grid,
+    goal: tuple[int, int],
+    seeds: list[tuple[tuple[int, int, int], float, _Action]],
+    *,
+    ug_name: str | None,
+    max_dist: int,
+    goal_dir: int | None,
+    turn_penalty: float,
+    underground_penalty: float,
+    tile_cost,
+    ug_blocked: set | None,
+) -> list[_Action] | None:
+    """Direction-aware A* from arbitrary seeds to ``goal``.
+
+    A node is ``(x, y, d)``: about to place an entity at (x, y), items arrive
+    moving ``d``. Each seed is ``(node, cost_so_far, action)`` where ``action``
+    is whatever the caller wants replayed first when the seed's branch wins
+    (a plain belt for point-to-point routes, a splitter junction for Steiner
+    branches). Returns the winning action list — terminal goal belt included —
+    or ``None``.
+    """
+
+    def placeable(t: tuple[int, int]) -> bool:
+        return t == goal or grid.is_free(*t)
+
+    def extra(t: tuple[int, int]) -> float:
+        return tile_cost(t) if tile_cost is not None else 0.0
+
+    came: dict[tuple, tuple] = {}
+    g: dict[tuple, float] = {}
+    seq = [0]
+    open_heap: list[tuple[float, int, tuple]] = []
+
+    def push(node, gv, parent, action) -> None:
+        if gv < g.get(node, float("inf")):
+            g[node] = gv
+            came[node] = (parent, action)
+            seq[0] += 1
+            heapq.heappush(open_heap, (gv + _manhattan(node[:2], goal), seq[0], node))
+
+    for node, gv, action in seeds:
+        push(node, gv, None, action)
+
+    closed: set[tuple] = set()
+    while open_heap:
+        _f, _c, node = heapq.heappop(open_heap)
+        if node in closed:
+            continue
+        closed.add(node)
+        x, y, d = node
+        tile = (x, y)
+
+        if tile == goal:
+            out = goal_dir if goal_dir is not None else d
+            if out != _OPP[d]:  # a belt can't reverse on a single tile
+                actions: list[_Action] = []
+                n = node
+                while n is not None:
+                    parent, action = came[n]
+                    actions.append(action)
+                    n = parent
+                actions.reverse()
+                actions.append(("belt", goal, out))
+                return actions
+            continue
+
+        # Surface belt at ``tile`` (must be free) turning to any non-reverse dir.
+        if grid.is_free(*tile):
+            for od, (dx, dy) in _DIR_VEC.items():
+                if od == _OPP[d]:
+                    continue
+                nxt = (x + dx, y + dy)
+                if placeable(nxt):
+                    step = 1.0 + extra(tile) + (turn_penalty if od != d else 0.0)
+                    push((nxt[0], nxt[1], od), g[node] + step, node, ("belt", tile, od))
+
+        # Underground continuing straight (dir d), skipping blocked tiles.
+        if max_dist >= 2 and ug_name is not None and grid.is_free(*tile):
+            dx, dy = _DIR_VEC[d]
+            axis = "h" if d in (EAST, WEST) else "v"
+            for sep in range(2, max_dist + 1):
+                ex, ey = x + dx * sep, y + dy * sep
+                if not grid.in_bounds(ex, ey):
+                    break
+                if ug_blocked is not None and any(
+                    (x + dx * k, y + dy * k, axis) in ug_blocked for k in range(sep + 1)
+                ):
+                    break  # span would cross a foreign underground: cross-capture
+                if (ex, ey) in grid.blocked:
+                    continue  # exit must be free
+                after = (ex + dx, ey + dy)  # exit ejects one tile further, dir d
+                if placeable(after):
+                    span_cost = sum(extra((x + dx * k, y + dy * k)) for k in range(1, sep))
+                    push(
+                        (after[0], after[1], d),
+                        g[node]
+                        + sep
+                        + underground_penalty
+                        + extra(tile)
+                        + extra((ex, ey))
+                        + span_cost,
+                        node,
+                        ("ug", tile, (ex, ey), d),
+                    )
+
+    return None
 
 
 def route_belt(
@@ -167,99 +289,37 @@ def route_belt(
             belts=[PlacedBelt(belt_name, start[0], start[1], out)], length=1, undergrounds=0
         )
 
-    def placeable(t: tuple[int, int]) -> bool:
-        return t == goal or grid.is_free(*t)
-
     def extra(t: tuple[int, int]) -> float:
         return tile_cost(t) if tile_cost is not None else 0.0
 
-    # Node = (x, y, d): about to place an entity at (x,y), items arrive moving d.
-    came: dict[tuple, tuple] = {}
-    g: dict[tuple, float] = {}
-    seq = [0]
-    open_heap: list[tuple[float, int, tuple]] = []
-
-    def push(node, gv, parent, action) -> None:
-        if gv < g.get(node, float("inf")):
-            g[node] = gv
-            came[node] = (parent, action)
-            seq[0] += 1
-            heapq.heappush(open_heap, (gv + _manhattan(node[:2], goal), seq[0], node))
-
     # Seed: place a belt at ``start`` outputting each direction (fed externally).
+    seeds: list[tuple[tuple[int, int, int], float, _Action]] = []
     for od, (dx, dy) in _DIR_VEC.items():
         if start_dir is not None and od == _OPP[start_dir]:
             continue
         nxt = (start[0] + dx, start[1] + dy)
-        if placeable(nxt):
-            push((nxt[0], nxt[1], od), 1.0 + extra(start), None, ("belt", start, od))
+        if nxt == goal or grid.is_free(*nxt):
+            seeds.append(((nxt[0], nxt[1], od), 1.0 + extra(start), ("belt", start, od)))
 
-    closed: set[tuple] = set()
-    while open_heap:
-        _f, _c, node = heapq.heappop(open_heap)
-        if node in closed:
-            continue
-        closed.add(node)
-        x, y, d = node
-        tile = (x, y)
-
-        if tile == goal:
-            out = goal_dir if goal_dir is not None else d
-            if out != _OPP[d]:  # a belt can't reverse on a single tile
-                return _reconstruct(came, node, goal, out, belt_name)
-            continue
-
-        # Surface belt at ``tile`` (must be free) turning to any non-reverse dir.
-        if grid.is_free(*tile):
-            for od, (dx, dy) in _DIR_VEC.items():
-                if od == _OPP[d]:
-                    continue
-                nxt = (x + dx, y + dy)
-                if placeable(nxt):
-                    step = 1.0 + extra(tile) + (turn_penalty if od != d else 0.0)
-                    push((nxt[0], nxt[1], od), g[node] + step, node, ("belt", tile, od))
-
-        # Underground continuing straight (dir d), skipping blocked tiles.
-        if max_dist >= 2 and ug_name is not None and grid.is_free(*tile):
-            dx, dy = _DIR_VEC[d]
-            axis = "h" if d in (EAST, WEST) else "v"
-            for sep in range(2, max_dist + 1):
-                ex, ey = x + dx * sep, y + dy * sep
-                if not grid.in_bounds(ex, ey):
-                    break
-                if ug_blocked is not None and any(
-                    (x + dx * k, y + dy * k, axis) in ug_blocked for k in range(sep + 1)
-                ):
-                    break  # span would cross a foreign underground: cross-capture
-                if (ex, ey) in grid.blocked:
-                    continue  # exit must be free
-                after = (ex + dx, ey + dy)  # exit ejects one tile further, dir d
-                if placeable(after):
-                    span_cost = sum(extra((x + dx * k, y + dy * k)) for k in range(1, sep))
-                    push(
-                        (after[0], after[1], d),
-                        g[node]
-                        + sep
-                        + underground_penalty
-                        + extra(tile)
-                        + extra((ex, ey))
-                        + span_cost,
-                        node,
-                        ("ug", tile, (ex, ey), d),
-                    )
-
-    return None
+    actions = _run_astar(
+        grid,
+        goal,
+        seeds,
+        ug_name=ug_name,
+        max_dist=max_dist,
+        goal_dir=goal_dir,
+        turn_penalty=turn_penalty,
+        underground_penalty=underground_penalty,
+        tile_cost=tile_cost,
+        ug_blocked=ug_blocked,
+    )
+    if actions is None:
+        return None
+    return route_from_actions(actions, belt_name)
 
 
-def _reconstruct(came, end_node, goal, goal_out, belt_name) -> BeltRoute:
-    actions: list[_Action] = []
-    node = end_node
-    while node is not None:
-        parent, action = came[node]
-        actions.append(action)
-        node = parent
-    actions.reverse()
-
+def route_from_actions(actions: list[_Action], belt_name: str) -> BeltRoute:
+    """Materialize a :class:`BeltRoute` from belt/underground actions."""
     occupied: dict[tuple[int, int], PlacedBelt] = {}
     undergrounds = 0
     ug_spans: list[tuple[tuple[int, int], tuple[int, int], int]] = []
@@ -276,32 +336,11 @@ def _reconstruct(came, end_node, goal, goal_out, belt_name) -> BeltRoute:
             place(PlacedBelt(belt_name, bx, by, od))
         else:  # underground
             _, (ix, iy), (ox, oy), dd = action
-            ug = belt_name  # caller passes the surface name; map below
-            place(
-                PlacedBelt(
-                    _UG_OF.get(belt_name, ug),
-                    ix,
-                    iy,
-                    dd,
-                    underground=True,
-                    underground_type="input",
-                )
-            )
-            place(
-                PlacedBelt(
-                    _UG_OF.get(belt_name, ug),
-                    ox,
-                    oy,
-                    dd,
-                    underground=True,
-                    underground_type="output",
-                )
-            )
+            ug = _UG_OF.get(belt_name, belt_name)
+            place(PlacedBelt(ug, ix, iy, dd, underground=True, underground_type="input"))
+            place(PlacedBelt(ug, ox, oy, dd, underground=True, underground_type="output"))
             ug_spans.append(((ix, iy), (ox, oy), dd))
             undergrounds += 1
-
-    # Final belt at the goal tile, output ``goal_out`` (feeds the target lane).
-    place(PlacedBelt(belt_name, goal[0], goal[1], goal_out))
 
     belts = list(occupied.values())
     return BeltRoute(
@@ -314,7 +353,7 @@ def _reconstruct(came, end_node, goal, goal_out, belt_name) -> BeltRoute:
 
 
 # Surface belt name -> underground belt name (filled from the DB at call time via
-# a module-level cache so _reconstruct stays simple).
+# a module-level cache so reconstruction stays simple).
 _UG_OF: dict[str, str] = {
     "transport-belt": "underground-belt",
     "fast-transport-belt": "fast-underground-belt",

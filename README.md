@@ -21,9 +21,9 @@ that constrain the next master solve. See
 | Stage | Module | Method |
 |-------|--------|--------|
 | Ratios / recipe selection | `factopt.ratios` | Linear programming (PuLP/CBC) |
-| Macro cells + ports | `factopt.macros` | Band/dense cells, shared belt trunks via pass-through ports |
-| Master placement + coarse routing | `factopt.master` | CP-SAT (no-overlap, coarse flows, cuts) |
-| Detailed routing | `factopt.routing` | Multi-net negotiated congestion over A\* |
+| Macro cells + ports | `factopt.macros` | Band/dense cells, one multi-sink net per belt trunk |
+| Master placement + coarse routing | `factopt.master` | CP-SAT (no-overlap, Steiner coarse flows, cuts) |
+| Detailed routing | `factopt.routing` | Multi-net negotiated congestion over Steiner-tree A\* (splitter junctions) |
 | Cut loop | `factopt.loop` | master → route → explain failures → cuts |
 | Static validation | `factopt.validate` | Overlap, bounds, inserters, belt-path flows |
 | Evaluation | `factopt.evaluate` | Analytical throughput / bottleneck model |
@@ -50,10 +50,12 @@ I/O and game data are handled by:
 **Working end-to-end.** `optimize(item, rate)` returns an importable block for
 every recipe tried so far (green circuits, red science, green science), and the
 general-purpose Benders loop (`factopt.loop`) places, routes, validates, and
-reports candidates with zero layout assumptions. A `dense` strategy now packs a
+reports candidates with zero layout assumptions. A `dense` strategy packs a
 fusable chain as a **direct-insertion** cell inside that same loop, and items
-feed multiple consumers via **shared belt trunks** (pass-through chaining)
-instead of per-consumer splitter fan-outs. **133 tests pass.**
+feed multiple consumers via **Steiner-tree routing**: one net per belt trunk
+with all its sinks, grown as a real belt tree with splitters dropped at the
+junctions (the VLSI-style answer, replacing the earlier pass-through
+chaining). **147 tests pass.**
 
 ### Foundations (done)
 
@@ -64,6 +66,10 @@ instead of per-consumer splitter fan-outs. **133 tests pass.**
 - [x] **Analytical evaluator** — resource bill (belts/inserters/power/area) and a
   bottleneck score, with a direct-insertion mode.
 - [x] **A\* belt router** — single-commodity, underground-belt aware.
+- [x] **Steiner-tree router** (`routing.steiner`) — multi-sink nets: the trunk
+  routes to the first sink, every later sink routes *to any tile of the
+  existing tree* via multi-source A\* seeded with one candidate **splitter
+  junction** per straight tree belt (2-tile, direction-constrained geometry).
 
 ### Placement strategies (done)
 
@@ -87,6 +93,11 @@ Complete generators:
   macro placement + coarse routing, multi-net detailed router, Benders-style
   cuts on failure. Handles arbitrary trees with no layout assumptions; every
   candidate ships with a markdown report and debug SVG (`factopt.report`).
+  The loop is **anytime**: the first routed placement becomes the incumbent
+  and the remaining time budget keeps searching under a hard
+  strictly-smaller-area bound, so more budget monotonically tightens the
+  result. Reports record the budget given and the wall time used (total and
+  per iteration, master vs routing).
 - [x] `loop.optimize_loop(..., fuse=True)` (`dense`) — the same cut loop with
   **direct insertion**: a fusable 2-level single-internal-item chain (e.g.
   copper-cable → electronic-circuit) is packed by `placement.dense.place_dense_row`
@@ -101,22 +112,25 @@ Optimizer components:
   (exact ≤ 8 recipes, CP-SAT beyond).
 - [x] `macros` — `MacroCell`/`PortCandidate`/`PlacedMacro`: recipe bands wrapped
   as placeable cells with explicit ports. Items travel on **shared belt trunks**:
-  consumers are partitioned into belt-capacity chains, one belt feeds the first
-  consumer's lane and continues out an east **pass-through port** to the next,
-  so nets are chain hops (rates telescoping) and splitter cascades appear only
-  when an item needs more than one trunk. The Benders loop **re-chains between
-  iterations** (`rechain`): each trunk's visit order is re-derived from the
-  actual placement, so chains and geometry co-evolve.
+  consumers are partitioned into belt-capacity trunks and each trunk is one
+  **multi-sink `FlowNet`** (`FlowSink` per consumer). The router grows each
+  trunk as a Steiner tree, so the branch topology adapts to whatever geometry
+  the master chooses — no pass-through lanes, no fixed visit order, no
+  re-chaining between iterations. Splitter cascades at the source appear only
+  when an item needs more than one trunk.
 - [x] `master` — CP-SAT placement (margin-inflated no-overlap, edge pins, port
   clearance) with a two-stage lexicographic objective (bbox area, then
-  rate-weighted flow distance + coarse congestion), plus per-net coarse unit
-  flows with placement-dependent boundary capacities. Macros also get a
+  rate-weighted **HPWL** over each net's pin set + coarse congestion), plus
+  per-net coarse **Steiner flows** (source supplies one unit per sink; used
+  arcs count once for congestion/length, mirroring shared trunks) with
+  placement-dependent boundary capacities. Macros also get a
   **quarter-turn orientation variable** (`macros.cell.rotated`): bands can face
   any direction, with ports, lanes, inserters, and coarse capacities rotating
   consistently (edge-pinned I/O macros stay fixed).
 - [x] `routing.multinet` — PathFinder-style negotiated congestion (present +
-  history costs), targeted rip-up for stragglers, underground cross-capture
-  avoidance, and structured `RoutingFailure`s.
+  history costs) over whole **trees**: a contested net rips up its entire tree
+  and re-grows it, targeted rip-up for stragglers, underground cross-capture
+  avoidance, and structured `RoutingFailure`s attributed to the failing sink.
 - [x] `master.cuts` / `routing.explain` — routing failures become serializable
   cuts (`nogood`, `pin_access`, `corridor`) with human-readable explanations,
   attributed to blocking macros via reachability flooding.
@@ -163,7 +177,10 @@ Dense placers:
 `line` still wins green science on footprint; `benders` is the only strategy
 with no structural layout assumptions, and its footprint is expected to drop
 as cut families sharpen (corridor min-cuts, congestion pricing) and margins
-become failure-driven instead of scheduled.
+become failure-driven instead of scheduled. Multi-consumer items now route as
+**Steiner trees** (one net per trunk, splitters at junctions), which removes
+the pass-through-lane geometry constraint and is the scalable path to more
+complex, late-game targets where consumers cannot be chained in a line.
 
 Sample blueprints are checked into `blueprints/` (a `benders` candidate with
 its markdown report and debug SVG lives in `blueprints/benders/`).
@@ -183,10 +200,10 @@ its markdown report and debug SVG lives in `blueprints/benders/`).
   producer/consumer pair becomes one dense direct-insertion cell, the rest stay
   belt bands. This handles green circuits (the whole plan fuses) and green
   science (only copper-cable → electronic-circuit fuses; gears fan out to the
-  belt and inserter bands on belts). With shared-trunk chaining, green science
-  routes at ~900t with ~150 belt tiles (vs ~1350t / 335 belts for the original
-  per-consumer fan-out) — copper wire direct-inserted, one iron trunk chaining
-  through all four consumers. A geometric finding shaped the cell: the density direct
+  belt and inserter bands on belts). With Steiner-tree trunks, green science
+  routes with one iron net feeding all four consumers as a single splitter-
+  branched tree (~180 belt tiles + 4 splitters vs ~335 belts for the original
+  per-consumer fan-out). A geometric finding shaped the cell: the density direct
   insertion buys (removing lanes) is exactly what removes the edge access
   interior machines need for their *other* items, so the dense cell is a single
   row (all machines edge-accessible). Remaining: only single-internal-item pairs

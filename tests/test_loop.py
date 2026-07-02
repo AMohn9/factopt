@@ -6,7 +6,7 @@ from factopt.data import vanilla
 from factopt.loop import optimize_loop
 from factopt.macros import build_problem
 from factopt.macros.cell import MacroCell, PlacedMacro, PortCandidate
-from factopt.macros.library import FlowNet, MacroProblem
+from factopt.macros.library import FlowNet, FlowSink, MacroProblem
 from factopt.master import solve_master
 from factopt.master.cuts import nogood_cut
 from factopt.master.model import MasterSolution
@@ -36,6 +36,14 @@ def _in_port(item, y=0):
     )
 
 
+def _net(nid, item, src, dst, rate=1.0):
+    return FlowNet(
+        id=nid, item=item, source_macro=src, source_port=f"{item}-out",
+        sinks=(FlowSink(macro=dst, port=f"{item}-in", rate_per_sec=rate),),
+        rate_per_sec=rate,
+    )
+
+
 def test_nogood_cut_forbids_placement():
     plan = solve_ratios("electronic-circuit", 2.0, DB)
     prob = build_problem(plan, DB)
@@ -57,7 +65,7 @@ def test_no_path_failure_explained_with_blockers():
     dst = _stub("b", "t", 2, 1, [_in_port("iron-plate")])
     wall = _stub("wall", "t", 9, 20, [])
     prob = MacroProblem(plan=None, macros={"a": src, "b": dst, "wall": wall})
-    prob.nets.append(FlowNet("n1", "iron-plate", "a", "iron-plate-out", "b", "iron-plate-in", 1.0))
+    prob.nets.append(_net("n1", "iron-plate", "a", "b"))
     sol = MasterSolution(
         status="FEASIBLE",
         placements={
@@ -84,8 +92,8 @@ def test_port_conflict_becomes_pin_access_cut():
     c = _stub("c", "t", 2, 1, [_in_port("copper-plate")])
     d = _stub("d", "t", 2, 1, [_out_port("copper-plate")])
     prob = MacroProblem(plan=None, macros={"a": a, "b": b, "c": c, "d": d})
-    prob.nets.append(FlowNet("n1", "iron-plate", "a", "iron-plate-out", "b", "iron-plate-in", 1.0))
-    prob.nets.append(FlowNet("n2", "copper-plate", "d", "copper-plate-out", "c", "copper-plate-in", 1.0))
+    prob.nets.append(_net("n1", "iron-plate", "a", "b"))
+    prob.nets.append(_net("n2", "copper-plate", "d", "c"))
     sol = MasterSolution(
         status="FEASIBLE",
         placements={

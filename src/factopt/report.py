@@ -93,24 +93,30 @@ def render_svg(
                 f'fill="{color}"><title>{_esc(f"{mid}.{p.id}")}</title></circle>'
             )
 
-    # Nets: detailed routes when given, straight lines otherwise.
+    # Nets: detailed tree branches when given, straight source->sink lines
+    # otherwise.
     for net in problem.nets:
-        path = (routes or {}).get(net.id)
-        if path:
-            pts = " ".join(f"{(x + 0.5) * s},{(y + 0.5) * s}" for x, y in path)
-            parts.append(
-                f'<polyline points="{pts}" fill="none" stroke="#6a3d9a" '
-                f'stroke-width="2" opacity="0.8"><title>{_esc(net.id)}</title></polyline>'
-            )
+        branches = (routes or {}).get(net.id)
+        if branches:
+            for bi, path in enumerate(branches):
+                if not path:
+                    continue
+                pts = " ".join(f"{(x + 0.5) * s},{(y + 0.5) * s}" for x, y in path)
+                parts.append(
+                    f'<polyline points="{pts}" fill="none" stroke="#6a3d9a" '
+                    f'stroke-width="2" opacity="0.8">'
+                    f"<title>{_esc(f'{net.id}[{bi}]')}</title></polyline>"
+                )
         else:
             sx, sy = solution.port_tile(net.source_macro, net.source_port)
-            tx, ty = solution.port_tile(net.sink_macro, net.sink_port)
-            parts.append(
-                f'<line x1="{(sx + 0.5) * s}" y1="{(sy + 0.5) * s}" '
-                f'x2="{(tx + 0.5) * s}" y2="{(ty + 0.5) * s}" stroke="#6a3d9a" '
-                f'stroke-width="1" stroke-dasharray="4 3" opacity="0.6">'
-                f"<title>{_esc(net.id)}</title></line>"
-            )
+            for snk in net.sinks:
+                tx, ty = solution.port_tile(snk.macro, snk.port)
+                parts.append(
+                    f'<line x1="{(sx + 0.5) * s}" y1="{(sy + 0.5) * s}" '
+                    f'x2="{(tx + 0.5) * s}" y2="{(ty + 0.5) * s}" stroke="#6a3d9a" '
+                    f'stroke-width="1" stroke-dasharray="4 3" opacity="0.6">'
+                    f"<title>{_esc(net.id)}</title></line>"
+                )
 
     parts.append("</svg>")
     return "\n".join(parts)
@@ -126,6 +132,15 @@ def candidate_report(result: "LoopResult") -> str:
     lines.append(f"# Benders candidate: {title}")
     lines.append("")
     lines.append(f"**Feasible:** {result.feasible}")
+    if result.max_iterations:
+        lines.append(
+            f"**Budget:** {result.time_budget_s:g}s total, "
+            f"{result.master_time_limit_s:g}s per master solve, "
+            f"{result.max_iterations} iterations max"
+        )
+        lines.append(
+            f"**Used:** {result.elapsed_s:.0f}s over {len(result.iterations)} iteration(s)"
+        )
     if best is not None:
         m = best.routing.metrics
         lines.append(
@@ -133,8 +148,8 @@ def candidate_report(result: "LoopResult") -> str:
         )
         lines.append(
             f"**Routing:** {m.total_belt_length} belt tiles, "
-            f"{m.total_undergrounds} undergrounds, {m.total_turns} turns, "
-            f"converged in {m.rounds} round(s)"
+            f"{m.total_undergrounds} undergrounds, {m.total_splitters} splitters, "
+            f"{m.total_turns} turns, converged in {m.rounds} round(s)"
         )
         lines.append(f"**Static validation:** {'ok' if best.validation.ok else 'VIOLATIONS'}")
     lines.append("")

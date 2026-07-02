@@ -1,10 +1,14 @@
 """Benders-style optimization loop (M5/M6).
 
-Repeats master -> detailed routing -> cuts until a routable placement is
-found (or the iteration budget runs out), then assembles and validates the
-blueprint. The margin/area-slack schedule loosens the master when cuts alone
-are not fixing infeasibility, mirroring the "minimize infeasibility first"
-lexicographic intent.
+Repeats master -> detailed routing -> cuts. The margin/area-slack schedule
+loosens the master when cuts alone are not fixing infeasibility, mirroring
+the "minimize infeasibility first" lexicographic intent.
+
+A routed placement does **not** end the loop: it becomes the incumbent, and
+the remaining budget keeps searching with the incumbent's area as a hard
+master bound (strictly smaller only), at the margin/slack that just
+succeeded. The loop therefore uses its whole time budget to tighten, and
+returns the best candidate found.
 """
 
 from __future__ import annotations
@@ -14,7 +18,7 @@ from dataclasses import dataclass, field
 
 from factopt.codec import encode
 from factopt.data.database import Database
-from factopt.macros import MacroProblem, build_problem, rechain
+from factopt.macros import MacroProblem, build_problem
 from factopt.master.cuts import BendersCut
 from factopt.master.model import MasterSolution, solve_master
 from factopt.model.blueprint import Blueprint
@@ -46,6 +50,8 @@ class Iteration:
     master: MasterSolution
     routing: RoutingResult | None
     new_cuts: list[BendersCut] = field(default_factory=list)
+    master_s: float = 0.0  # wall time of the CP-SAT master solve
+    routing_s: float = 0.0  # wall time of detailed routing
 
 
 @dataclass
@@ -75,6 +81,11 @@ class LoopResult:
     best: Candidate | None
     iterations: list[Iteration]
     cuts: list[BendersCut]
+    # Budgets the loop was given and the wall time it actually used.
+    time_budget_s: float = 0.0
+    master_time_limit_s: float = 0.0
+    max_iterations: int = 0
+    elapsed_s: float = 0.0
 
     @property
     def feasible(self) -> bool:
@@ -82,6 +93,13 @@ class LoopResult:
 
     def summary(self) -> str:
         lines = []
+        if self.max_iterations:
+            lines.append(
+                f"budget: {self.time_budget_s:g}s total, "
+                f"{self.master_time_limit_s:g}s/master solve, "
+                f"{self.max_iterations} iteration(s) max; "
+                f"used {self.elapsed_s:.0f}s over {len(self.iterations)} iteration(s)"
+            )
         for it in self.iterations:
             status = "unsolved"
             if it.master.ok:
@@ -95,7 +113,8 @@ class LoopResult:
             lines.append(
                 f"iter {it.index}: margin={it.margin} slack={it.area_slack:g} "
                 f"bbox={it.master.width}x{it.master.height} {status}; "
-                f"+{len(it.new_cuts)} cuts"
+                f"+{len(it.new_cuts)} cuts "
+                f"[master {it.master_s:.0f}s, route {it.routing_s:.1f}s]"
             )
         for cut in self.cuts:
             lines.append(f"  cut[{cut.kind}] {cut.explanation}")
@@ -115,9 +134,10 @@ def _assemble(
     flows = [
         (
             master.port_tile(n.source_macro, n.source_port),
-            master.port_tile(n.sink_macro, n.sink_port),
+            master.port_tile(s.macro, s.port),
         )
         for n in problem.nets
+        for s in n.sinks
     ]
     report = validate(entities, db, bounds=(0, 0, master.width, master.height), flows=flows)
     bp = Blueprint(label=label, entities=entities)
@@ -158,16 +178,17 @@ def optimize_loop(
     best: Candidate | None = None
     started = time.monotonic()
 
-    prev_placements = None
+    margin, slack = _SCHEDULE[0]
     for i in range(max_iterations):
         if time.monotonic() - started > time_budget_s:
             break
-        margin, slack = _SCHEDULE[min(i, len(_SCHEDULE) - 1)]
-        if prev_placements is not None:
-            # Replace the pre-placement heaviest-first trunk order with the
-            # geometry the previous master actually chose, so this master's
-            # flow-distance objective and the router see consistent chains.
-            rechain(problem, prev_placements)
+        if best is None:
+            # Feasibility phase: walk the loosening schedule.
+            margin, slack = _SCHEDULE[min(i, len(_SCHEDULE) - 1)]
+        # Tightening phase: keep the rung that routed, bound the master by
+        # the incumbent so only strictly smaller placements come back.
+        max_area = best.area - 1 if best is not None else None
+        t0 = time.monotonic()
         master = solve_master(
             problem,
             cuts=cuts,
@@ -175,23 +196,44 @@ def optimize_loop(
             area_slack=slack,
             coarse_cell=coarse_cell,
             time_limit_s=master_time_limit_s,
+            max_area=max_area,
         )
         it = Iteration(index=i, margin=margin, area_slack=slack, master=master, routing=None)
+        it.master_s = time.monotonic() - t0
         iterations.append(it)
         if not master.ok:
-            # All placements at this margin are cut off; the schedule will
-            # loosen next round.
+            if best is None:
+                # All placements at this margin are cut off; the schedule
+                # will loosen next round.
+                continue
+            # No strictly tighter placement at this margin: retry with less
+            # spacing (tighter areas live at smaller margins), stop at 1.
+            if margin <= 1:
+                break
+            margin -= 1
             continue
-        prev_placements = master.placements
 
+        t0 = time.monotonic()
         routing = route_nets(problem, master, db, belt=belt)
+        it.routing_s = time.monotonic() - t0
         it.routing = routing
         if routing.feasible:
+            # New incumbent (the area cap guarantees it is strictly better);
+            # keep searching with the remaining budget.
             best = _assemble(problem, master, routing, db, label)
-            break
+            continue
 
         new_cuts = explain_failures(problem, master, routing, db, belt=belt)
         it.new_cuts = new_cuts
         cuts.extend(new_cuts)
 
-    return LoopResult(problem=problem, best=best, iterations=iterations, cuts=cuts)
+    return LoopResult(
+        problem=problem,
+        best=best,
+        iterations=iterations,
+        cuts=cuts,
+        time_budget_s=time_budget_s,
+        master_time_limit_s=master_time_limit_s,
+        max_iterations=max_iterations,
+        elapsed_s=time.monotonic() - started,
+    )

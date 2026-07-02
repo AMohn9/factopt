@@ -84,9 +84,10 @@ def test_build_problem_partial_fusion_green_science():
     assert all(n.item != "copper-cable" for n in prob.nets)
     # The dense cell's circuit output belts to the inserter band.
     ec = [n for n in prob.nets if n.item == "electronic-circuit"]
-    assert len(ec) == 1 and ec[0].sink_macro == "inserter"
-    # Gears fan out to both the belt and inserter bands (on belts).
-    gear_sinks = {n.sink_macro for n in prob.nets if n.item == "iron-gear-wheel"}
+    assert len(ec) == 1
+    assert {s.macro for s in ec[0].sinks} == {"inserter"}
+    # Gears feed both the belt and inserter bands from one multi-sink trunk.
+    gear_sinks = {s.macro for n in prob.nets if n.item == "iron-gear-wheel" for s in n.sinks}
     assert gear_sinks == {"inserter", "transport-belt"}
 
 

@@ -29,11 +29,13 @@ def test_problem_has_macro_per_recipe_plus_io(gs_problem):
 def test_every_net_endpoint_is_a_real_port(gs_problem):
     for net in gs_problem.nets:
         src = gs_problem.macros[net.source_macro]
-        dst = gs_problem.macros[net.sink_macro]
         assert src.port(net.source_port).direction == "output"
-        assert dst.port(net.sink_port).direction == "input"
         assert src.port(net.source_port).item == net.item
-        assert dst.port(net.sink_port).item == net.item
+        assert net.sinks, f"net {net.id} has no sinks"
+        for s in net.sinks:
+            dst = gs_problem.macros[s.macro]
+            assert dst.port(s.port).direction == "input"
+            assert dst.port(s.port).item == net.item
 
 
 def test_each_output_port_serves_one_net(gs_problem):
@@ -143,25 +145,20 @@ def test_validator_flow_through_underground():
     assert validate(ents, DB, flows=[((0, 0), (6, 0))]).ok
 
 
-def test_iron_plate_rides_one_shared_trunk(gs_problem):
-    """Green science's four iron consumers (5.5/s total) share one belt trunk
-    that chains through their lanes, instead of splitting into four belts."""
+def test_iron_plate_rides_one_multi_sink_trunk(gs_problem):
+    """Green science's four iron consumers (5.5/s total) share one belt trunk:
+    a single multi-sink net whose tree the router will branch with splitters,
+    instead of four separate point-to-point belts."""
     iron = [n for n in gs_problem.nets if n.item == "iron-plate"]
-    from_connector = [n for n in iron if n.source_macro == "in-iron-plate"]
-    assert len(from_connector) == 1
-    # Rates telescope: each hop carries the remaining downstream demand.
-    by_source = {n.source_macro: n for n in iron}
-    hop = from_connector[0]
-    seen_rates = [hop.rate_per_sec]
-    while hop.sink_macro in by_source:
-        hop = by_source[hop.sink_macro]
-        seen_rates.append(hop.rate_per_sec)
-    assert len(seen_rates) == len(iron), "iron hops do not form one chain"
-    assert all(a > b for a, b in zip(seen_rates, seen_rates[1:]))
-    # Mid-chain hops leave through pass-through ports.
-    assert all(
-        n.source_port == "iron-plate-thru" for n in iron if n.source_macro != "in-iron-plate"
-    )
+    assert len(iron) == 1, "iron plates need exactly one trunk at these rates"
+    net = iron[0]
+    assert net.source_macro == "in-iron-plate"
+    assert len(net.sinks) == 4
+    # The trunk carries the sum of its sinks' demands, and fits one belt.
+    assert net.rate_per_sec == pytest.approx(sum(s.rate_per_sec for s in net.sinks))
+    assert net.rate_per_sec <= DB.belts["transport-belt"].throughput
+    # Each consumer appears exactly once.
+    assert len({s.macro for s in net.sinks}) == 4
 
 
 def test_input_connector_is_a_stub_for_single_trunk(gs_problem):
@@ -170,69 +167,16 @@ def test_input_connector_is_a_stub_for_single_trunk(gs_problem):
     assert conn.width * conn.height <= 2
 
 
-def test_thru_lane_is_belt_connected(gs_problem):
-    """Items entering a chained band's input port can ride its lane out the
-    pass-through port (the physical trunk actually passes through)."""
-    from factopt.validate import BeltGraph
-
+def test_no_pass_through_ports(gs_problem):
+    """The Steiner router branches trunks with splitters outside macros, so
+    macros no longer carry pass-through lanes or -thru ports."""
     for macro in gs_problem.macros.values():
-        thrus = [p for p in macro.ports if p.id.endswith("-thru")]
-        if not thrus:
-            continue
-        placed = PlacedMacro(cell=macro, x=0, y=0)
-        graph = BeltGraph(placed.entities(), DB)
-        for p in thrus:
-            inp = macro.port(f"{p.item}-in")
-            assert graph.reachable(
-                placed.port_tile(inp), placed.port_tile(p)
-            ), f"{macro.id}: {p.item} lane does not reach its thru port"
+        assert not [p for p in macro.ports if p.id.endswith("-thru")], macro.id
 
 
-def test_rechain_orders_trunk_by_geometry():
-    """rechain() re-derives a trunk's visit order from an actual placement:
-    the nearest consumer to the source is visited first, regardless of the
-    build-time heaviest-first guess."""
-    from factopt.macros import build_problem, rechain
-
-    plan = solve_ratios("logistic-science-pack", 1.0, DB)
-    prob = build_problem(plan, DB)
-    n_before = len(prob.nets)
-
-    # One row, deliberately REVERSING the heaviest-first iron order
-    # (gears 3/s ... transport-belt 0.5/s): lightest consumer nearest.
-    xs = {
-        "in-iron-plate": 0,
-        "in-copper-plate": 0,
-        "transport-belt": 10,
-        "inserter": 40,
-        "electronic-circuit": 70,
-        "iron-gear-wheel": 100,
-        "copper-cable": 130,
-        "logistic-science-pack": 160,
-        "out": 200,
-    }
-    placements = {
-        mid: PlacedMacro(cell=m, x=xs[mid], y=(0 if mid.startswith("in-") else 20))
-        for mid, m in prob.macros.items()
-    }
-    rechain(prob, placements)
-
-    iron = [n for n in prob.nets if n.item == "iron-plate"]
-    first = next(n for n in iron if n.source_macro == "in-iron-plate")
-    assert first.sink_macro == "transport-belt"
-    # Chain still visits every consumer exactly once with telescoping rates.
-    assert len(iron) == 4
-    assert len(prob.nets) == n_before
-    by_source = {n.source_macro: n for n in iron}
-    hop, rates = first, [first.rate_per_sec]
-    while hop.sink_macro in by_source:
-        hop = by_source[hop.sink_macro]
-        rates.append(hop.rate_per_sec)
-    assert len(rates) == 4 and all(a > b for a, b in zip(rates, rates[1:]))
-    # Endpoints still resolve to real ports after the reorder.
-    for n in prob.nets:
-        assert prob.macros[n.source_macro].port(n.source_port).direction == "output"
-        assert prob.macros[n.sink_macro].port(n.sink_port).direction == "input"
+def test_each_sink_port_serves_one_net(gs_problem):
+    used = [(s.macro, s.port) for n in gs_problem.nets for s in n.sinks]
+    assert len(used) == len(set(used)), "an input port is shared by two nets"
 
 
 def test_fanout_ports_reachable_from_lane(gs_problem):

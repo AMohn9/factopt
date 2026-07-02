@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="276" height="372" viewBox="-12 -12 276 372" font-family="monospace">
+<rect x="0" y="0" width="252" height="348" fill="#fafafa" stroke="#444"/>
+<rect x="48" y="24" width="84" height="96" fill="#e0e0e0" stroke="#333" opacity="0.9"/>
+<text x="51.599999999999994" y="36" font-size="10">dense-copper-cable</text>
+<circle cx="54.0" cy="30.0" r="4" fill="#1f77b4"><title>dense-copper-cable.copper-plate-in</title></circle>
+<circle cx="54.0" cy="114.0" r="4" fill="#1f77b4"><title>dense-copper-cable.iron-plate-in</title></circle>
+<circle cx="126.0" cy="102.0" r="4" fill="#d62728"><title>dense-copper-cable.electronic-circuit-out-0</title></circle>
+<rect x="0" y="24" width="24" height="12" fill="#d9f2d9" stroke="#333" opacity="0.9"/>
+<text x="3.5999999999999996" y="36" font-size="10">in-copper-plate</text>
+<circle cx="18.0" cy="30.0" r="4" fill="#d62728"><title>in-copper-plate.copper-plate-out-0</title></circle>
+<rect x="0" y="168" width="24" height="12" fill="#d9f2d9" stroke="#333" opacity="0.9"/>
+<text x="3.5999999999999996" y="180" font-size="10">in-iron-plate</text>
+<circle cx="18.0" cy="174.0" r="4" fill="#d62728"><title>in-iron-plate.iron-plate-out-0</title></circle>
+<rect x="24" y="288" width="108" height="36" fill="#cfe3f7" stroke="#333" opacity="0.9"/>
+<text x="27.599999999999998" y="300" font-size="10">inserter</text>
+<circle cx="114.0" cy="294.0" r="4" fill="#1f77b4"><title>inserter.electronic-circuit-in</title></circle>
+<circle cx="126.0" cy="294.0" r="4" fill="#1f77b4"><title>inserter.iron-gear-wheel-in</title></circle>
+<circle cx="30.0" cy="294.0" r="4" fill="#1f77b4"><title>inserter.iron-plate-in</title></circle>
+<circle cx="42.0" cy="318.0" r="4" fill="#d62728"><title>inserter.inserter-out-0</title></circle>
+<rect x="48" y="144" width="84" height="36" fill="#cfe3f7" stroke="#333" opacity="0.9"/>
+<text x="51.599999999999994" y="156" font-size="10">iron-gear-wheel</text>
+<circle cx="54.0" cy="174.0" r="4" fill="#1f77b4"><title>iron-gear-wheel.iron-plate-in</title></circle>
+<circle cx="126.0" cy="150.0" r="4" fill="#d62728"><title>iron-gear-wheel.iron-gear-wheel-out-0</title></circle>
+<rect x="156" y="36" width="96" height="288" fill="#cfe3f7" stroke="#333" opacity="0.9"/>
+<text x="159.60000000000002" y="48" font-size="10">logistic-science-pack</text>
+<circle cx="174.0" cy="318.0" r="4" fill="#1f77b4"><title>logistic-science-pack.inserter-in</title></circle>
+<circle cx="162.0" cy="318.0" r="4" fill="#1f77b4"><title>logistic-science-pack.transport-belt-in</title></circle>
+<circle cx="246.0" cy="42.0" r="4" fill="#d62728"><title>logistic-science-pack.logistic-science-pack-out-0</title></circle>
+<rect x="228" y="0" width="24" height="12" fill="#f7ddc7" stroke="#333" opacity="0.9"/>
+<text x="231.60000000000002" y="12" font-size="10">out</text>
+<circle cx="234.0" cy="6.0" r="4" fill="#1f77b4"><title>out.logistic-science-pack-in</title></circle>
+<rect x="36" y="204" width="96" height="36" fill="#cfe3f7" stroke="#333" opacity="0.9"/>
+<text x="39.599999999999994" y="216" font-size="10">transport-belt</text>
+<circle cx="114.0" cy="210.0" r="4" fill="#1f77b4"><title>transport-belt.iron-plate-in</title></circle>
+<circle cx="126.0" cy="210.0" r="4" fill="#1f77b4"><title>transport-belt.iron-gear-wheel-in</title></circle>
+<circle cx="42.0" cy="234.0" r="4" fill="#d62728"><title>transport-belt.transport-belt-out-0</title></circle>
+<polyline points="30.0,30.0 42.0,30.0" fill="none" stroke="#6a3d9a" stroke-width="2" opacity="0.8"><title>copper-plate:in-copper-plate-t0[0]</title></polyline>
+<polyline points="138.0,102.0 138.0,114.0 138.0,126.0 126.0,126.0 114.0,126.0 102.0,126.0 90.0,126.0 78.0,126.0 66.0,126.0 54.0,126.0 42.0,126.0 30.0,126.0 18.0,126.0 18.0,138.0 18.0,186.0 18.0,198.0 18.0,258.0 18.0,270.0 6.0,270.0 6.0,282.0 18.0,282.0 78.0,282.0 90.0,282.0 102.0,282.0 114.0,282.0" fill="none" stroke="#6a3d9a" stroke-width="2" opacity="0.8"><title>electronic-circuit:dense-copper-cable-t0[0]</title></polyline>
+<polyline points="42.0,330.0 42.0,342.0 54.0,342.0 66.0,342.0 78.0,342.0 90.0,342.0 102.0,342.0 114.0,342.0 126.0,342.0 138.0,342.0 150.0,342.0 162.0,342.0 174.0,342.0 174.0,330.0" fill="none" stroke="#6a3d9a" stroke-width="2" opacity="0.8"><title>inserter:inserter-t0[0]</title></polyline>
+<polyline points="126.0,138.0 138.0,138.0 138.0,150.0 138.0,162.0 138.0,174.0 138.0,186.0 138.0,198.0 138.0,258.0 138.0,270.0 126.0,270.0 126.0,282.0" fill="none" stroke="#6a3d9a" stroke-width="2" opacity="0.8"><title>iron-gear-wheel:iron-gear-wheel-t0[0]</title></polyline>
+<polyline points="126.0,186.0 126.0,198.0" fill="none" stroke="#6a3d9a" stroke-width="2" opacity="0.8"><title>iron-gear-wheel:iron-gear-wheel-t0[1]</title></polyline>
+<polyline points="42.0,186.0 42.0,198.0 54.0,198.0 54.0,186.0" fill="none" stroke="#6a3d9a" stroke-width="2" opacity="0.8"><title>iron-plate:in-iron-plate-t0[0]</title></polyline>
+<polyline points="18.0,210.0 18.0,222.0 6.0,222.0 6.0,210.0 6.0,198.0 6.0,186.0 6.0,126.0 6.0,114.0 18.0,114.0 30.0,114.0 42.0,114.0" fill="none" stroke="#6a3d9a" stroke-width="2" opacity="0.8"><title>iron-plate:in-iron-plate-t0[1]</title></polyline>
+<polyline points="30.0,174.0 30.0,186.0 30.0,198.0 30.0,210.0 30.0,222.0 30.0,234.0 30.0,246.0 30.0,258.0 30.0,270.0 30.0,282.0" fill="none" stroke="#6a3d9a" stroke-width="2" opacity="0.8"><title>iron-plate:in-iron-plate-t0[2]</title></polyline>
+<polyline points="42.0,258.0 42.0,270.0 54.0,270.0 66.0,270.0 78.0,270.0 90.0,270.0 102.0,270.0 102.0,258.0 102.0,198.0 102.0,186.0 114.0,186.0 114.0,198.0" fill="none" stroke="#6a3d9a" stroke-width="2" opacity="0.8"><title>iron-plate:in-iron-plate-t0[3]</title></polyline>
+<polyline points="246.0,30.0 234.0,30.0 222.0,30.0 222.0,18.0 222.0,6.0" fill="none" stroke="#6a3d9a" stroke-width="2" opacity="0.8"><title>logistic-science-pack:logistic-science-pack-t0[0]</title></polyline>
+<polyline points="42.0,246.0 54.0,246.0 66.0,246.0 78.0,246.0 90.0,246.0 102.0,246.0 114.0,246.0 126.0,246.0 138.0,246.0 150.0,246.0 150.0,258.0 150.0,270.0 150.0,282.0 150.0,294.0 150.0,306.0 150.0,318.0 150.0,330.0 162.0,330.0" fill="none" stroke="#6a3d9a" stroke-width="2" opacity="0.8"><title>transport-belt:transport-belt-t0[0]</title></polyline>
+</svg>

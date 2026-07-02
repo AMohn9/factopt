@@ -1,8 +1,12 @@
 """Coarse routing extension for the master problem (M3).
 
 Overlays a grid of ``cell`` x ``cell`` tile bins on the placement canvas and
-routes every net as a unit flow between the coarse cells containing its
-ports. Arc capacity across each cell boundary shrinks when macros span the
+routes every net as a **Steiner flow** over the coarse cells: the source cell
+supplies one unit per sink, each sink cell consumes one, and an arc is
+*used* by the net when any amount flows over it. Congestion and tree length
+count used arcs (a belt crosses a boundary once no matter how many sinks sit
+downstream), which is the coarse mirror of the detailed router's shared-trunk
+trees. Arc capacity across each cell boundary shrinks when macros span the
 boundary, so the master avoids placements whose flows would have to squeeze
 through walls.
 
@@ -36,17 +40,20 @@ class CoarseVars:
     cell: int
     cols: int
     rows: int
+    # Per (net, arc): integer flow 0..n_sinks and a bool "this net uses the arc".
     flow: dict[tuple[str, Arc], cp_model.IntVar]
+    arc_used: dict[tuple[str, Arc], cp_model.IntVar]
     cap: dict[Edge, cp_model.IntVar]
     used: dict[Edge, cp_model.IntVar]
     saturated: dict[Edge, cp_model.IntVar]
     src_cell: dict[str, tuple[cp_model.IntVar, cp_model.IntVar]]
-    snk_cell: dict[str, tuple[cp_model.IntVar, cp_model.IntVar]]
+    snk_cell: dict[tuple[str, int], tuple[cp_model.IntVar, cp_model.IntVar]]
     v: MasterVars
 
     def congestion_expr(self):
+        # Tree length = arcs used (shared trunk edges count once per net).
         return SATURATION_WEIGHT * sum(self.saturated.values()) + COARSE_LENGTH_WEIGHT * sum(
-            self.flow.values()
+            self.arc_used.values()
         )
 
 
@@ -173,23 +180,33 @@ def add_coarse_routing(problem: MacroProblem, v: MasterVars, cell: int = 4) -> C
             model.add_multiplication_equality(b, [bx_, by_])
             inbox[(i, j)] = b
 
-    # -- unit flows per net -------------------------------------------------
+    # -- Steiner flows per net ----------------------------------------------
+    # Source supplies one unit per sink; each sink consumes one. ``arc_used``
+    # reifies "any flow on this arc", which is what shares capacity and what
+    # the congestion/length objective counts (a trunk belt crosses a boundary
+    # once regardless of how many sinks it feeds).
     flow: dict[tuple[str, Arc], cp_model.IntVar] = {}
+    arc_used: dict[tuple[str, Arc], cp_model.IntVar] = {}
     src_cell: dict[str, tuple[cp_model.IntVar, cp_model.IntVar]] = {}
-    snk_cell: dict[str, tuple[cp_model.IntVar, cp_model.IntVar]] = {}
+    snk_cell: dict[tuple[str, int], tuple[cp_model.IntVar, cp_model.IntVar]] = {}
 
     for net in problem.nets:
+        k = len(net.sinks)
         arcs: list[Arc] = []
         for c1, c2 in edges:
             arcs.append((c1, c2))
             arcs.append((c2, c1))
         for a in arcs:
-            f = model.new_bool_var(f"f_{net.id}_{a}")
-            model.add(f <= inbox[a[0]])
-            model.add(f <= inbox[a[1]])
+            f = model.new_int_var(0, k, f"f_{net.id}_{a}")
+            u = model.new_bool_var(f"fu_{net.id}_{a}")
+            model.add(f <= k * u)
+            model.add(u <= f)
+            model.add(u <= inbox[a[0]])
+            model.add(u <= inbox[a[1]])
             flow[(net.id, a)] = f
+            arc_used[(net.id, a)] = u
 
-        # Coarse cell of each endpoint port, as a function of placement and
+        # Coarse cell of each pin port, as a function of placement and
         # orientation.
         def _port_cell(macro_id: str, port_id: str, tag: str):
             px_expr, py_expr = v.port_exprs(macro_id, port_id)
@@ -204,19 +221,24 @@ def add_coarse_routing(problem: MacroProblem, v: MasterVars, cell: int = 4) -> C
             return ci, cj
 
         sci, scj = _port_cell(net.source_macro, net.source_port, f"src_{net.id}")
-        tci, tcj = _port_cell(net.sink_macro, net.sink_port, f"snk_{net.id}")
         src_cell[net.id] = (sci, scj)
-        snk_cell[net.id] = (tci, tcj)
         b_src = _cell_bools(model, sci, scj, cols, rows, f"bsrc_{net.id}")
-        b_snk = _cell_bools(model, tci, tcj, cols, rows, f"bsnk_{net.id}")
+        b_snks = []
+        for si, fs in enumerate(net.sinks):
+            tci, tcj = _port_cell(fs.macro, fs.port, f"snk_{net.id}_{si}")
+            snk_cell[(net.id, si)] = (tci, tcj)
+            b_snks.append(_cell_bools(model, tci, tcj, cols, rows, f"bsnk_{net.id}_{si}"))
 
-        # Flow conservation with placement-dependent source/sink.
+        # Flow conservation with placement-dependent source/sinks.
         for i in range(cols):
             for j in range(rows):
                 c = (i, j)
                 out_arcs = [flow[(net.id, a)] for a in arcs if a[0] == c]
                 in_arcs = [flow[(net.id, a)] for a in arcs if a[1] == c]
-                model.add(sum(out_arcs) - sum(in_arcs) == b_src[c] - b_snk[c])
+                model.add(
+                    sum(out_arcs) - sum(in_arcs)
+                    == k * b_src[c] - sum(b[c] for b in b_snks)
+                )
 
     # -- shared capacity + congestion ---------------------------------------
     used: dict[Edge, cp_model.IntVar] = {}
@@ -224,7 +246,8 @@ def add_coarse_routing(problem: MacroProblem, v: MasterVars, cell: int = 4) -> C
     for e in edges:
         c1, c2 = e
         total = sum(
-            flow[(net.id, (c1, c2))] + flow[(net.id, (c2, c1))] for net in problem.nets
+            arc_used[(net.id, (c1, c2))] + arc_used[(net.id, (c2, c1))]
+            for net in problem.nets
         )
         u = model.new_int_var(0, len(problem.nets), f"used_{e}")
         model.add(u == total)
@@ -240,6 +263,7 @@ def add_coarse_routing(problem: MacroProblem, v: MasterVars, cell: int = 4) -> C
         cols=cols,
         rows=rows,
         flow=flow,
+        arc_used=arc_used,
         cap=cap,
         used=used,
         saturated=saturated,
@@ -251,8 +275,8 @@ def add_coarse_routing(problem: MacroProblem, v: MasterVars, cell: int = 4) -> C
 
 def extract_coarse(cv: CoarseVars, solver: cp_model.CpSolver) -> CoarseSolution:
     sol = CoarseSolution(cell=cv.cell, cols=cv.cols, rows=cv.rows)
-    for (net_id, arc), f in cv.flow.items():
-        if solver.value(f):
+    for (net_id, arc), u in cv.arc_used.items():
+        if solver.value(u):
             sol.routes.setdefault(net_id, []).append(arc)
     for e in cv.cap:
         u = solver.value(cv.used[e])

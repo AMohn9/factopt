@@ -9,11 +9,13 @@ Turns a :class:`~factopt.ratios.solver.ProductionPlan` into:
 * one **output collector** for the target (pinned to the east edge).
 
 Item transport uses **shared belt trunks**: an item's consumers are partitioned
-into chains that fit one belt lane's throughput, and a single belt feeds the
-chain's first consumer, rides its input lane past that unit's inserters, and
-continues out an east **pass-through port** to the next consumer. Nets are the
-chain's hops, so the detailed router still sees plain point-to-point routes; a
-splitter cascade appears only when an item genuinely needs several trunks.
+into trunks that fit one belt lane's throughput, and each trunk becomes one
+**multi-sink net** (:class:`FlowNet` with one source port and one
+:class:`FlowSink` per consumer). The detailed router realizes a trunk as a
+Steiner *tree* -- one belt leaves the source and splitters branch it toward
+every sink -- so consumers no longer need pass-through lanes or a fixed visit
+order. A splitter cascade at the source appears only when an item genuinely
+needs several trunks.
 
 The result (:class:`MacroProblem`) is the master problem's input: macros to
 place, nets to route, and edge pins.
@@ -43,15 +45,26 @@ _SPLITTER_OF = {
 
 
 @dataclass(frozen=True)
+class FlowSink:
+    """One consumer of a multi-sink net: a macro input port and its demand."""
+
+    macro: str
+    port: str
+    rate_per_sec: float
+
+
+@dataclass(frozen=True)
 class FlowNet:
-    """One item flow the detailed router must realize as a belt path."""
+    """One item trunk the detailed router must realize as a belt *tree*:
+    a single source port feeding every sink port, with splitters at the
+    junctions. ``rate_per_sec`` is the trunk's total demand (the sum over
+    sinks), which fits one belt by construction."""
 
     id: str
     item: str
     source_macro: str
     source_port: str
-    sink_macro: str
-    sink_port: str
+    sinks: tuple[FlowSink, ...]
     rate_per_sec: float
 
 
@@ -62,9 +75,9 @@ class MacroProblem:
     nets: list[FlowNet] = field(default_factory=list)
     # Macro id -> blueprint edge it must touch ("west" inputs, "east" output).
     pins: dict[str, Side] = field(default_factory=dict)
-    # Trunk structure behind the nets: item -> chains -> (unit id, demand).
-    # The order within a chain is the trunk's visit order; :func:`rechain`
-    # reorders it from an actual placement and re-emits the nets.
+    # Trunk structure behind the nets: item -> trunks -> (unit id, demand).
+    # Each trunk becomes one multi-sink FlowNet; the router picks the actual
+    # branch topology, so the order within a trunk carries no meaning.
     chains: dict[str, list[list[tuple[str, float]]]] = field(default_factory=dict)
     # item -> the macro whose output ports source that item's trunks.
     sources: dict[str, str] = field(default_factory=dict)
@@ -119,7 +132,6 @@ def _band_macro(
     recipe: str,
     n_machines: int,
     n_out: int,
-    thru_items: set[str],
     db: Database,
     belt: str,
     inserter: str,
@@ -127,8 +139,7 @@ def _band_macro(
     cap: float,
 ) -> MacroCell:
     """One recipe band as a macro. ``n_out`` is the number of product trunks
-    (output ports); ``thru_items`` are input items this band must pass through
-    to a downstream consumer (east pass-through port on that input lane)."""
+    (output ports)."""
     band = build_band(
         recipe,
         n_machines,
@@ -141,11 +152,9 @@ def _band_macro(
     entities = list(band.entities)
     ports: list[PortCandidate] = []
 
-    in_lanes: list[tuple[str, int]] = []  # (item, lane row)
     out_slot, out_item = None, None
     for slot, a in band.lanes.items():
         if a.flow_dir == "in":
-            in_lanes.append((a.item, band.lane_row[slot]))
             ports.append(
                 PortCandidate(
                     id=f"{a.item}-in",
@@ -161,7 +170,6 @@ def _band_macro(
             out_slot, out_item = slot, a.item
 
     width, height = band.width, band.height
-    cascade_rows: range = range(0)
     if out_slot is not None and n_out >= 1:
         out_row = band.lane_row[out_slot]
         tiles, width_needed, max_row = _fanout_east(
@@ -169,8 +177,6 @@ def _band_macro(
         )
         width = max(width, width_needed)
         height = max(height, max_row + 1)
-        if n_out >= 2:
-            cascade_rows = range(out_row, max_row + 1)
         for i, (px, py) in enumerate(tiles):
             ports.append(
                 PortCandidate(
@@ -183,32 +189,6 @@ def _band_macro(
                     max_rate_per_sec=cap,
                 )
             )
-
-    # Pass-through ports: the input lane continues out the east edge, so one
-    # belt trunk can feed this band and keep going to the next consumer.
-    for item, row in in_lanes:
-        if item not in thru_items:
-            continue
-        if row in cascade_rows:
-            raise ValueError(
-                f"band {recipe!r}: the {item!r} lane (row {row}) is occupied by "
-                f"the {n_out}-trunk output cascade; cannot chain through this band"
-            )
-        for x in range(band.width, width):
-            entities.append(
-                Entity(name=belt, position=Position(x + 0.5, row + 0.5), direction=EAST)
-            )
-        ports.append(
-            PortCandidate(
-                id=f"{item}-thru",
-                item=item,
-                direction="output",
-                side="east",
-                local_position=(width - 1, row),
-                flow_entry_dir=EAST,
-                max_rate_per_sec=cap,
-            )
-        )
 
     return MacroCell(
         id=recipe,
@@ -224,15 +204,14 @@ def _dense_macro(
     macro_id: str,
     placement: DensePlacement,
     n_out: int,
-    thru_items: set[str],
     belt: str,
     cap: float,
 ) -> tuple[MacroCell, str]:
     """Wrap a :class:`DensePlacement` as a placeable/routable macro.
 
     The internal item is direct-inserted, so it is never a port. The producer's
-    and consumer's raws become west input ports (with east pass-through ports
-    for ``thru_items``); the product becomes one east output port per trunk.
+    and consumer's raws become west input ports; the product becomes one east
+    output port per trunk.
 
     Returns ``(cell, product_item)``.
     """
@@ -262,7 +241,6 @@ def _dense_macro(
     )
     width = max(width, width_needed)
     height = max(height, max_row + 1)
-    cascade_rows: range = range(out_row, max_row + 1) if n_out >= 2 else range(0)
     for i, (px, py) in enumerate(tiles):
         ports.append(
             PortCandidate(
@@ -271,31 +249,6 @@ def _dense_macro(
                 direction="output",
                 side="east",
                 local_position=(px, py),
-                flow_entry_dir=EAST,
-                max_rate_per_sec=cap,
-            )
-        )
-
-    for p in in_ports:
-        if p.item not in thru_items:
-            continue
-        row = p.local_position[1]
-        if row in cascade_rows:
-            raise ValueError(
-                f"dense cell {macro_id!r}: the {p.item!r} lane (row {row}) is "
-                f"occupied by the {n_out}-trunk output cascade; cannot chain through"
-            )
-        for x in range(placement.width, width):
-            entities.append(
-                Entity(name=belt, position=Position(x + 0.5, row + 0.5), direction=EAST)
-            )
-        ports.append(
-            PortCandidate(
-                id=f"{p.item}-thru",
-                item=p.item,
-                direction="output",
-                side="east",
-                local_position=(width - 1, row),
                 flow_entry_dir=EAST,
                 max_rate_per_sec=cap,
             )
@@ -374,12 +327,12 @@ def _output_collector(item: str, belt: str, cap: float) -> MacroCell:
 def _partition_chains(
     entries: list[tuple[str, float]], cap: float
 ) -> list[list[tuple[str, float]]]:
-    """Partition one item's consumers into shared belt trunks (chains).
+    """Partition one item's consumers into shared belt trunks.
 
-    Each chain's total demand fits one lane's throughput ``cap`` (its first hop
-    carries the whole chain), and consumers are visited heaviest-first so the
-    trunk sheds load early. The output collector (``"out"``) has no
-    pass-through, so it is always placed at a chain's end.
+    Each trunk's total demand fits one lane's throughput ``cap`` (the trunk's
+    root edge carries all of it). Consumers are packed heaviest-first
+    (first-fit decreasing); within a trunk the order carries no meaning --
+    the Steiner router picks the branch topology from the actual geometry.
     """
     ordered = sorted((e for e in entries if e[0] != "out"), key=lambda t: (-t[1], t[0]))
     terminal = [e for e in entries if e[0] == "out"]
@@ -413,11 +366,10 @@ def build_problem(
     internal item is never routed.
 
     Each item's consumers share **belt trunks**: consumers are partitioned into
-    chains fitting one lane's throughput, and one belt feeds the first
-    consumer's lane, rides it past that unit's inserters, and continues out its
-    east pass-through port to the next consumer. Nets are the chain's hops
-    (rates telescope: each hop carries the remaining downstream demand), so the
-    master/router/cuts still see plain point-to-point nets.
+    trunks fitting one lane's throughput, and each trunk is one multi-sink
+    :class:`FlowNet`. The detailed router grows a Steiner tree per trunk --
+    one belt from the source, splitters branching toward every sink -- so the
+    branch topology adapts to whatever geometry the master chooses.
     """
     counts = {ln.recipe: ln.machines for ln in plan.lines}
     crafts = {ln.recipe: ln.crafts_per_sec for ln in plan.lines}
@@ -485,19 +437,6 @@ def build_problem(
     if plan.target not in chains:
         chains[plan.target] = [[("out", plan.rate)]]
 
-    # Every consumer on a multi-member trunk gets a pass-through port (not just
-    # the mid-chain ones), so the visit order stays re-derivable from the
-    # actual placement (:func:`rechain`) without rebuilding macros. The output
-    # collector has no lane and stays terminal.
-    thru_needs: dict[str, set[str]] = {}
-    for item, item_chains in chains.items():
-        for chain in item_chains:
-            if len(chain) < 2:
-                continue
-            for uid, _ in chain:
-                if uid != "out":
-                    thru_needs.setdefault(uid, set()).add(item)
-
     problem = MacroProblem(plan=plan)
     producer_of: dict[str, str] = {}
 
@@ -509,8 +448,7 @@ def build_problem(
             inserter=inserter, long_inserter=long_inserter, belt=belt,
         )
         macro, _ = _dense_macro(
-            uid, placement, len(chains.get(product, [])),
-            thru_needs.get(uid, set()), belt, cap,
+            uid, placement, len(chains.get(product, [])), belt, cap,
         )
         problem.macros[uid] = macro
         producer_of[product] = uid
@@ -522,7 +460,7 @@ def build_problem(
         out_item = next(iter(db.recipes[r].products))
         macro = _band_macro(
             r, counts[r], len(chains.get(out_item, [])),
-            thru_needs.get(r, set()), db, belt, inserter, long_inserter, cap,
+            db, belt, inserter, long_inserter, cap,
         )
         problem.macros[r] = macro
         producer_of[out_item] = r
@@ -541,73 +479,27 @@ def build_problem(
 
     problem.chains = chains
     problem.sources = producer_of
-    _emit_chain_nets(problem)
+    _emit_trunk_nets(problem)
 
     return problem
 
 
-def _emit_chain_nets(problem: MacroProblem) -> None:
-    """(Re)build ``problem.nets`` from the trunk structure: one hop per chain
-    link, rates telescoping (each hop carries the remaining downstream
-    demand)."""
+def _emit_trunk_nets(problem: MacroProblem) -> None:
+    """Build ``problem.nets`` from the trunk structure: one multi-sink net per
+    trunk, carrying the trunk's total demand from its source output port to
+    every consumer's input port."""
     problem.nets = []
     for item, item_chains in sorted(problem.chains.items()):
         src = problem.sources[item]
         for ci, chain in enumerate(item_chains):
-            prev = src
-            remaining = sum(d for _, d in chain)
-            for uid, d in chain:
-                problem.nets.append(
-                    FlowNet(
-                        id=f"{item}:{prev}->{uid}",
-                        item=item,
-                        source_macro=prev,
-                        source_port=f"{item}-out-{ci}" if prev == src else f"{item}-thru",
-                        sink_macro=uid,
-                        sink_port=f"{item}-in",
-                        rate_per_sec=remaining,
-                    )
+            sinks = tuple(FlowSink(macro=uid, port=f"{item}-in", rate_per_sec=d) for uid, d in chain)
+            problem.nets.append(
+                FlowNet(
+                    id=f"{item}:{src}-t{ci}",
+                    item=item,
+                    source_macro=src,
+                    source_port=f"{item}-out-{ci}",
+                    sinks=sinks,
+                    rate_per_sec=sum(d for _, d in chain),
                 )
-                remaining -= d
-                prev = uid
-
-
-def rechain(problem: MacroProblem, placements: dict[str, "PlacedMacro"]) -> None:
-    """Re-derive each trunk's visit order from an actual placement and re-emit
-    the nets.
-
-    Chain partitions (which consumers share a trunk, hence macro ports) are
-    fixed at build time; this only reorders the hops within each trunk: starting
-    at the trunk's source port, greedily visit the nearest remaining consumer
-    (measured Manhattan from the current exit to each candidate's input port).
-    The output collector has no pass-through and stays terminal. Meant to run
-    between Benders iterations so the pre-placement heaviest-first guess is
-    replaced by the geometry the master actually chose.
-    """
-
-    def tile(mid: str, pid: str) -> tuple[int, int]:
-        pm = placements[mid]
-        return pm.port_tile(pm.cell.port(pid))
-
-    for item, item_chains in problem.chains.items():
-        for ci, chain in enumerate(item_chains):
-            movable = [(uid, d) for uid, d in chain if uid != "out"]
-            terminal = [(uid, d) for uid, d in chain if uid == "out"]
-            if len(movable) < 2:
-                continue
-            pos = tile(problem.sources[item], f"{item}-out-{ci}")
-            ordered: list[tuple[str, float]] = []
-            while movable:
-                movable.sort(
-                    key=lambda t: (
-                        abs(tile(t[0], f"{item}-in")[0] - pos[0])
-                        + abs(tile(t[0], f"{item}-in")[1] - pos[1]),
-                        t[0],
-                    )
-                )
-                nxt = movable.pop(0)
-                ordered.append(nxt)
-                pos = tile(nxt[0], f"{item}-thru")
-            item_chains[ci] = ordered + terminal
-
-    _emit_chain_nets(problem)
+            )

@@ -92,20 +92,26 @@ def _cell_of(tile, cell):
 
 
 def test_coarse_routes_connect_ports(gs_coarse, gs_problem):
+    """Every sink cell of a net is reachable from its source cell over the
+    net's used coarse arcs (the coarse route is a connected Steiner tree)."""
     c = gs_coarse.coarse
     for net in gs_problem.nets:
         src = _cell_of(gs_coarse.port_tile(net.source_macro, net.source_port), c.cell)
-        snk = _cell_of(gs_coarse.port_tile(net.sink_macro, net.sink_port), c.cell)
         arcs = c.routes.get(net.id, [])
-        if src == snk:
-            continue  # same-cell nets need no coarse route
-        # Divergence check: src has one extra outgoing, snk one extra incoming.
-        div = {}
+        succ = {}
         for a, b in arcs:
-            div[a] = div.get(a, 0) + 1
-            div[b] = div.get(b, 0) - 1
-        assert div.get(src) == 1, f"{net.id}: source divergence {div.get(src)}"
-        assert div.get(snk) == -1, f"{net.id}: sink divergence {div.get(snk)}"
+            succ.setdefault(a, []).append(b)
+        seen = {src}
+        stack = [src]
+        while stack:
+            cur = stack.pop()
+            for nxt in succ.get(cur, []):
+                if nxt not in seen:
+                    seen.add(nxt)
+                    stack.append(nxt)
+        for s in net.sinks:
+            snk = _cell_of(gs_coarse.port_tile(s.macro, s.port), c.cell)
+            assert snk in seen, f"{net.id}: sink cell {snk} unreachable from {src}"
 
 
 def test_coarse_capacity_respected(gs_coarse):
