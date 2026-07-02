@@ -10,13 +10,25 @@ The problem is decomposed like an EDA physical-design flow — ratios → placem
 routing → evaluation — and the pipeline is fronted by a selector that runs
 several placement strategies and keeps the best complete block.
 
+The general-purpose core is a **logic-based Benders-style loop**
+(`factopt.loop`): a CP-SAT master places macro cells (recipe bands with
+explicit ports) and routes coarse per-net flows over a capacity-aware cell
+grid; a negotiated-congestion multi-net router then instantiates exact belts;
+routing failures come back as structured cuts (no-good, pin-access, corridor)
+that constrain the next master solve. See
+`factorio_blueprint_optimizer_plan.md` for the design rationale.
+
 | Stage | Module | Method |
 |-------|--------|--------|
 | Ratios / recipe selection | `factopt.ratios` | Linear programming (PuLP/CBC) |
-| Placement | `factopt.placement` | CP-SAT (OR-Tools) + heuristic generators |
-| Routing | `factopt.routing` | A\* with underground belts |
+| Macro cells + ports | `factopt.macros` | Band-based cells, splitter fan-out per net |
+| Master placement + coarse routing | `factopt.master` | CP-SAT (no-overlap, coarse flows, cuts) |
+| Detailed routing | `factopt.routing` | Multi-net negotiated congestion over A\* |
+| Cut loop | `factopt.loop` | master → route → explain failures → cuts |
+| Static validation | `factopt.validate` | Overlap, bounds, inserters, belt-path flows |
 | Evaluation | `factopt.evaluate` | Analytical throughput / bottleneck model |
 | Selection | `factopt.optimize` | Try strategies, keep tightest complete block |
+| Reporting | `factopt.report` | SVG debug rendering + markdown candidate report |
 | Ground truth | `factopt.sim` | Headless Factorio measurement |
 
 I/O and game data are handled by:
@@ -36,8 +48,9 @@ I/O and game data are handled by:
 ## Status
 
 **Working end-to-end.** `optimize(item, rate)` returns an importable block for
-every recipe tried so far (green circuits, red science, green science). **82
-tests pass.**
+every recipe tried so far (green circuits, red science, green science), and the
+general-purpose Benders loop (`factopt.loop`) places, routes, validates, and
+reports candidates with zero layout assumptions. **120 tests pass.**
 
 ### Foundations (done)
 
@@ -67,11 +80,31 @@ Complete generators:
 - [x] `line.synthesize_line` (`line`) — **optimizer-driven** placement: drives the
   `bus` emission from the consumer-adjacency ordering with the tightest gaps that
   still route. Handles general trees; markedly tighter than `bus`.
+- [x] `loop.optimize_loop` (`benders`) — the **general-purpose cut loop**: CP-SAT
+  macro placement + coarse routing, multi-net detailed router, Benders-style
+  cuts on failure. Handles arbitrary trees with no layout assumptions; every
+  candidate ships with a markdown report and debug SVG (`factopt.report`).
 
 Optimizer components:
 
-- [x] `placement.ordering.order_recipes` — **CP-SAT** ordering that minimizes total
-  (flow-weighted) producer→consumer distance, so producers sit next to consumers.
+- [x] `placement.ordering.order_recipes` — ordering that minimizes total
+  (flow-weighted) producer→consumer distance, so producers sit next to consumers
+  (exact ≤ 8 recipes, CP-SAT beyond).
+- [x] `macros` — `MacroCell`/`PortCandidate`/`PlacedMacro`: recipe bands wrapped
+  as placeable cells with explicit ports; product fan-out via splitter cascades
+  so every net is a dedicated port-to-port belt.
+- [x] `master` — CP-SAT placement (margin-inflated no-overlap, edge pins, port
+  clearance) with a two-stage lexicographic objective (bbox area, then
+  rate-weighted flow distance + coarse congestion), plus per-net coarse unit
+  flows with placement-dependent boundary capacities.
+- [x] `routing.multinet` — PathFinder-style negotiated congestion (present +
+  history costs), targeted rip-up for stragglers, underground cross-capture
+  avoidance, and structured `RoutingFailure`s.
+- [x] `master.cuts` / `routing.explain` — routing failures become serializable
+  cuts (`nogood`, `pin_access`, `corridor`) with human-readable explanations,
+  attributed to blocking macros via reachability flooding.
+- [x] `validate` — static validator: overlap, bounds, inserter pickup/dropoff,
+  and directed belt-path checks (splitter- and underground-aware).
 
 Dense placers (interior placement only — no boundary I/O yet):
 
@@ -88,9 +121,9 @@ Dense placers (interior placement only — no boundary I/O yet):
 
 ### Selection & measurement (done)
 
-- [x] `optimize.optimize` — runs `compact`, `line`, and `bus`, keeps the tightest
-  **complete, target-meeting** block, and reports every candidate's footprint
-  (and skip reason) via `.summary()`.
+- [x] `optimize.optimize` — runs `compact`, `line`, `bus`, and `benders`, keeps
+  the tightest **complete, target-meeting** block, and reports every candidate's
+  footprint (and skip reason) via `.summary()`.
 - [x] `sim` — headless-Factorio harness that builds a block, feeds inputs from
   infinity chests, powers it, runs it fast, and reads the output item's real
   production rate. Pure-Python parts are unit-tested; requires Factorio installed
@@ -102,16 +135,28 @@ Dense placers (interior placement only — no boundary I/O yet):
 |------|------------------|-----------|-------|
 | Green circuits 5/s | `compact` | 15×14 = 210t | shared-lane |
 | Green circuits 30/s | `compact` | 92×14 = 1288t | 2 tiled sub-blocks |
-| Green science 1/s | `line` | 41×23 = 943t | was 1634t via `bus` — **42% smaller** |
+| Green science 1/s | `line` | 41×23 = 943t | `benders` also routes it (~1100–2000t, varies by run) |
 
-Sample blueprints are checked into `blueprints/`.
+`line` still wins green science on footprint; `benders` is the only strategy
+with no structural layout assumptions, and its footprint is expected to drop
+as cut families sharpen (corridor min-cuts, congestion pricing) and margins
+become failure-driven instead of scheduled.
+
+Sample blueprints are checked into `blueprints/` (a `benders` candidate with
+its markdown report and debug SVG lives in `blueprints/benders/`).
 
 ---
 
 ## Known limitations / next steps
 
-- **No direct insertion in general chains yet.** `line`/`bus` still route
-  intermediates on belts. The consumer-adjacency ordering makes most
+- **`benders` is loose and run-to-run variable.** The margin/area-slack
+  schedule loosens the whole layout when routing fails; the next step is
+  failure-driven spacing (corridor min-cut cuts that widen only the failing
+  corridor) and congestion-price cuts on success, so footprints tighten
+  instead of ballooning. Master solves are also nondeterministic (parallel
+  CP-SAT), so iteration counts vary.
+- **No direct insertion in general chains yet.** `line`/`bus`/`benders` still
+  route intermediates on belts. The consumer-adjacency ordering makes most
   producer→consumer links adjacent (5 of 6 for green science); the next layer is
   emitting those as machine-to-machine **direct insertion** (no through-belt),
   which also fixes the "shared plate/wire lane" contention risk.
@@ -142,6 +187,21 @@ from factopt.data import vanilla
 res = optimize("logistic-science-pack", 1.0, vanilla.DB)  # green science
 print(res.summary())            # per-strategy footprints + the winner
 print(res.blueprint_string)     # tightest complete block, paste into Factorio
+```
+
+`benders` runs several CP-SAT master solves and can take minutes; pass
+`strategies=("compact", "line", "bus")` to skip it, or tune `benders_budget_s`.
+
+### The Benders loop directly (report + debug SVG)
+
+```python
+from factopt.loop import optimize_loop
+from factopt.report import write_candidate
+from factopt.data import vanilla
+
+res = optimize_loop("logistic-science-pack", 1.0, vanilla.DB)
+print(res.summary())                       # per-iteration story + every cut
+write_candidate(res, "out/", "green-science-1ps")  # .blueprint.txt / .report.md / .debug.svg
 ```
 
 ### Tight 2-level blocks directly (`mvp`)

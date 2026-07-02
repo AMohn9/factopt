@@ -210,99 +210,171 @@ def route_nets(
         return cost
 
     hard_failures: set[str] = set()
+
+    def reroute(n: _Net, hard_block_others: bool) -> None:
+        """Re-route ``n`` against the other nets' current routes."""
+        occupancy: dict[tuple[int, int], int] = {}
+        ug_blocked: set[tuple[int, int, str]] = set()
+        hard_tiles: set[tuple[int, int]] = set()
+        for other in nets:
+            if other is n or other.route is None:
+                continue
+            for t in other.route.tiles():
+                occupancy[t] = occupancy.get(t, 0) + 1
+                hard_tiles.add(t)
+            ug_blocked |= other.route.ug_span_tiles()
+        grid = make_grid(n)
+        if hard_block_others:
+            grid.blocked |= hard_tiles - {n.start, n.goal}
+        n.route = route_belt(
+            grid,
+            n.start,
+            n.goal,
+            db,
+            belt=belt,
+            goal_dir=n.goal_dir,
+            start_dir=n.start_dir,
+            turn_penalty=_TURN_PENALTY,
+            tile_cost=tile_cost_fn(n, occupancy),
+            ug_blocked=ug_blocked,
+        )
+
+    def contested_nets() -> tuple[set[str], set[tuple[int, int]]]:
+        """Nets whose current routes share tiles (or self-cross)."""
+        tile_users: dict[tuple[int, int], list[str]] = {}
+        bad: set[str] = set()
+        tiles: set[tuple[int, int]] = set()
+        for n in nets:
+            if n.route is None:
+                continue
+            for t in n.route.tiles():
+                tile_users.setdefault(t, []).append(n.id)
+            if n.route.conflicts:
+                bad.add(n.id)
+                tiles.update(n.route.conflicts)
+        for t, users in tile_users.items():
+            if len(users) > 1:
+                bad.update(users)
+                tiles.add(t)
+        return bad, tiles
+
+    # Round 0: route everyone against soft congestion costs; afterwards only
+    # rip up and re-route the nets actually in conflict, so settled routes
+    # stay put and pairs cannot swap channels forever.
+    for n in nets:
+        reroute(n, hard_block_others=False)
+        if n.route is None:
+            hard_failures.add(n.id)
+
     for rnd in range(max_rounds):
         rounds_used = rnd + 1
-        # Occupancy from current routes (excluding the net being routed).
-        for n in nets:
-            if n.id in hard_failures:
-                continue
-            occupancy: dict[tuple[int, int], int] = {}
-            ug_blocked: set[tuple[int, int, str]] = set()
-            for other in nets:
-                if other is n or other.route is None:
-                    continue
-                for t in other.route.tiles():
-                    occupancy[t] = occupancy.get(t, 0) + 1
-                ug_blocked |= other.route.ug_span_tiles()
-            grid = make_grid(n)
-            n.route = route_belt(
-                grid,
-                n.start,
-                n.goal,
-                db,
-                belt=belt,
-                goal_dir=n.goal_dir,
-                start_dir=n.start_dir,
-                turn_penalty=_TURN_PENALTY,
-                tile_cost=tile_cost_fn(n, occupancy),
-                ug_blocked=ug_blocked,
-            )
-            if n.route is None:
-                # No path even though other nets only cost, never block:
-                # a hard geometric failure.
-                hard_failures.add(n.id)
-                failures.append(
-                    RoutingFailure(
-                        kind="no_path",
-                        net_id=n.id,
-                        item=n.net.item,
-                        source_macro=n.net.source_macro,
-                        sink_macro=n.net.sink_macro,
-                        start=n.start,
-                        goal=n.goal,
-                    )
-                )
-
-        # Shared tiles among routed nets, or self-crossing reconstructions?
-        tile_users: dict[tuple[int, int], list[str]] = {}
-        contested: set[tuple[int, int]] = set()
-        for n in nets:
-            if n.route is None:
-                continue
-            for t in n.route.tiles():
-                tile_users.setdefault(t, []).append(n.id)
-            contested.update(n.route.conflicts)
-        contested |= {t for t, users in tile_users.items() if len(users) > 1}
-        if not contested:
+        bad, tiles = contested_nets()
+        bad -= hard_failures
+        if not bad:
             break
-        for t in contested:
+        for t in tiles:
             history[t] = history.get(t, 0.0) + _HISTORY_INC
         present_cost *= _PRESENT_GROWTH
-    else:
-        # Round limit: blame the nets still fighting over tiles (or unable to
-        # reconstruct without self-crossing).
-        tile_users = {}
         for n in nets:
-            if n.route is None:
-                continue
-            for t in n.route.tiles():
-                tile_users.setdefault(t, []).append(n.id)
-        shared = {t: u for t, u in tile_users.items() if len(u) > 1}
-        blamed: set[str] = set()
-        for t, users in shared.items():
-            blamed.update(users[1:])
+            if n.id in bad:
+                reroute(n, hard_block_others=False)
+                if n.route is None:
+                    hard_failures.add(n.id)
+
+    # Hardening fallback: if negotiation stalled, route the stragglers with
+    # everything else as hard obstacles (strict sequential completion).
+    bad, _ = contested_nets()
+    bad -= hard_failures
+    if bad:
         for n in nets:
-            if n.route is not None and n.route.conflicts:
-                blamed.add(n.id)
-                for t in n.route.conflicts:
-                    shared.setdefault(t, [n.id, n.id])
-        for n in nets:
-            if n.id in blamed:
-                failures.append(
-                    RoutingFailure(
-                        kind="congestion",
-                        net_id=n.id,
-                        item=n.net.item,
-                        source_macro=n.net.source_macro,
-                        sink_macro=n.net.sink_macro,
-                        start=n.start,
-                        goal=n.goal,
-                        contested_tiles=frozenset(
-                            t for t, u in shared.items() if n.id in u
-                        ),
-                    )
-                )
+            if n.id in bad:
                 n.route = None
+        for n in nets:
+            if n.id in bad:
+                reroute(n, hard_block_others=True)
+
+    # Targeted rip-up: a straggler that still cannot route gets its ideal
+    # path (computed on the empty grid), the nets sitting on that path are
+    # ripped up, the straggler routes first, and the victims re-route around
+    # it -- all with hard blocking so the outcome is conflict-free.
+    for n in nets:
+        if n.id in hard_failures or n.route is not None:
+            continue
+        ideal = route_belt(
+            make_grid(n),
+            n.start,
+            n.goal,
+            db,
+            belt=belt,
+            goal_dir=n.goal_dir,
+            start_dir=n.start_dir,
+        )
+        if ideal is None:
+            continue  # genuinely walled in; classified below
+        victims = [
+            o for o in nets if o is not n and o.route is not None
+            and o.route.tiles() & ideal.tiles()
+        ]
+        saved = {o.id: o.route for o in victims}
+        for o in victims:
+            o.route = None
+        reroute(n, hard_block_others=True)
+        for o in victims:
+            reroute(o, hard_block_others=True)
+        if n.route is None or any(o.route is None for o in victims):
+            # Rip-up made things worse; restore the previous state.
+            n.route = None
+            for o in victims:
+                o.route = saved[o.id]
+
+    # Classify what is still broken.
+    for n in nets:
+        if n.id in hard_failures:
+            continue
+        if n.route is None:
+            failures.append(
+                RoutingFailure(
+                    kind="congestion" if n.id in bad else "no_path",
+                    net_id=n.id,
+                    item=n.net.item,
+                    source_macro=n.net.source_macro,
+                    sink_macro=n.net.sink_macro,
+                    start=n.start,
+                    goal=n.goal,
+                )
+            )
+    for n in nets:
+        if n.id in hard_failures:
+            failures.append(
+                RoutingFailure(
+                    kind="no_path",
+                    net_id=n.id,
+                    item=n.net.item,
+                    source_macro=n.net.source_macro,
+                    sink_macro=n.net.sink_macro,
+                    start=n.start,
+                    goal=n.goal,
+                )
+            )
+    remaining, remaining_tiles = contested_nets()
+    remaining -= hard_failures
+    for n in nets:
+        if n.id in remaining:
+            failures.append(
+                RoutingFailure(
+                    kind="congestion",
+                    net_id=n.id,
+                    item=n.net.item,
+                    source_macro=n.net.source_macro,
+                    sink_macro=n.net.sink_macro,
+                    start=n.start,
+                    goal=n.goal,
+                    contested_tiles=frozenset(
+                        remaining_tiles & (n.route.tiles() if n.route else set())
+                    ),
+                )
+            )
+            n.route = None
 
     metrics = RoutingMetrics(rounds=rounds_used)
     entities: list[Entity] = []

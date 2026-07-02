@@ -2,14 +2,21 @@
 
 :func:`render_svg` draws a master solution: macro rectangles with their ports,
 straight net lines, and (when present) the coarse grid with per-arc
-utilization. Later stages overlay detailed routes. The output is a plain SVG
-string; callers write it wherever they like.
+utilization plus detailed routes. :func:`candidate_report` renders a
+markdown post-mortem of a Benders loop run, and :func:`write_candidate`
+drops blueprint + report + SVG artifacts into a directory.
 """
 
 from __future__ import annotations
 
+from pathlib import Path
+from typing import TYPE_CHECKING
+
 from factopt.macros.library import MacroProblem
 from factopt.master.model import MasterSolution
+
+if TYPE_CHECKING:
+    from factopt.loop import LoopResult
 
 _SCALE = 12  # pixels per tile
 
@@ -107,3 +114,94 @@ def render_svg(
 
     parts.append("</svg>")
     return "\n".join(parts)
+
+
+def candidate_report(result: "LoopResult") -> str:
+    """Markdown report: rate plan, placement, coarse utilization, routing
+    metrics, cuts used, and static validation."""
+    lines: list[str] = []
+    best = result.best
+    plan = result.problem.plan
+    title = f"{plan.rate:g}/s {plan.target}" if plan is not None else "candidate"
+    lines.append(f"# Benders candidate: {title}")
+    lines.append("")
+    lines.append(f"**Feasible:** {result.feasible}")
+    if best is not None:
+        m = best.routing.metrics
+        lines.append(
+            f"**Bounding box:** {best.width} x {best.height} = {best.area} tiles"
+        )
+        lines.append(
+            f"**Routing:** {m.total_belt_length} belt tiles, "
+            f"{m.total_undergrounds} undergrounds, {m.total_turns} turns, "
+            f"converged in {m.rounds} round(s)"
+        )
+        lines.append(f"**Static validation:** {'ok' if best.validation.ok else 'VIOLATIONS'}")
+    lines.append("")
+
+    if plan is not None:
+        lines.append("## Rate plan")
+        lines.append("")
+        lines.append("```")
+        lines.append(str(plan))
+        lines.append("```")
+        lines.append("")
+
+    if best is not None:
+        lines.append("## Placement")
+        lines.append("")
+        lines.append("| macro | position | size |")
+        lines.append("|---|---|---|")
+        for mid, pm in sorted(best.master.placements.items()):
+            lines.append(
+                f"| {mid} | ({pm.x}, {pm.y}) | {pm.cell.width} x {pm.cell.height} |"
+            )
+        lines.append("")
+        if best.master.coarse is not None:
+            c = best.master.coarse
+            lines.append("## Coarse routing")
+            lines.append("")
+            lines.append(
+                f"{c.cols} x {c.rows} cells of {c.cell} tiles; "
+                f"max boundary utilization {c.max_utilization:.2f}"
+            )
+            lines.append("")
+        if not best.validation.ok:
+            lines.append("## Validation violations")
+            lines.append("")
+            lines.append("```")
+            lines.append(str(best.validation))
+            lines.append("```")
+            lines.append("")
+
+    lines.append("## Iterations")
+    lines.append("")
+    lines.append("```")
+    lines.append(result.summary())
+    lines.append("```")
+    return "\n".join(lines) + "\n"
+
+
+def write_candidate(result: "LoopResult", directory: str | Path, name: str) -> dict[str, Path]:
+    """Write blueprint string, markdown report, and debug SVG for a loop run.
+
+    Returns the paths written, keyed by kind.
+    """
+    directory = Path(directory)
+    directory.mkdir(parents=True, exist_ok=True)
+    out: dict[str, Path] = {}
+
+    report_path = directory / f"{name}.report.md"
+    report_path.write_text(candidate_report(result))
+    out["report"] = report_path
+
+    if result.best is not None:
+        bp_path = directory / f"{name}.blueprint.txt"
+        bp_path.write_text(result.best.blueprint_string)
+        out["blueprint"] = bp_path
+        svg_path = directory / f"{name}.debug.svg"
+        svg_path.write_text(
+            render_svg(result.problem, result.best.master, routes=result.best.routing.paths)
+        )
+        out["svg"] = svg_path
+    return out

@@ -6,9 +6,13 @@ from factopt.optimize import optimize
 
 DB = vanilla.DB
 
+# The classic generators; `benders` runs CP-SAT masters and gets its own
+# integration coverage in test_loop.py / test_endtoend.py.
+FAST = ("compact", "line", "bus")
+
 
 def test_optimize_prefers_compact_for_green_circuits():
-    ob = optimize("electronic-circuit", 5.0, DB)
+    ob = optimize("electronic-circuit", 5.0, DB, strategies=FAST)
     assert ob.best is not None
     assert ob.best.strategy == "compact"
     # The tight generator beats the general bus on footprint.
@@ -17,7 +21,7 @@ def test_optimize_prefers_compact_for_green_circuits():
 
 
 def test_optimize_uses_line_for_green_science():
-    ob = optimize("logistic-science-pack", 1.0, DB)
+    ob = optimize("logistic-science-pack", 1.0, DB, strategies=FAST)
     # compact can't do this multi-level chain; the optimizer-ordered `line`
     # completes it and beats the loose `bus` on footprint.
     compact = next(c for c in ob.candidates if c.strategy == "compact")
@@ -36,7 +40,7 @@ def test_optimize_best_is_usable_and_importable():
         ("automation-science-pack", 1.0),
         ("logistic-science-pack", 1.0),
     ]:
-        ob = optimize(target, rate, DB)
+        ob = optimize(target, rate, DB, strategies=FAST)
         assert ob.best is not None and ob.best.usable
         # The winning blueprint string decodes (is importable).
         back = decode(ob.blueprint_string)

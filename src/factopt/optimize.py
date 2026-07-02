@@ -10,9 +10,15 @@ Current strategies, in rough preference order:
 * ``compact`` -- :func:`factopt.mvp.synthesize`, the tight shared-lane generator.
   Small footprint but only handles 2-level single-lane chains (green circuits,
   red science).
+* ``line`` -- :func:`factopt.placement.line.synthesize_line`, ordering-driven
+  band stacking with the tightest routable gaps.
 * ``bus`` -- :func:`factopt.bus.synthesize_bus`, the general band+A*-router
   generator. Handles arbitrary trees (e.g. green science) and always emits a
   complete block, but is looser.
+* ``benders`` -- :func:`factopt.loop.optimize_loop`, the general-purpose
+  master-placement + coarse-routing + detailed-routing cut loop. The most
+  general strategy; slower (CP-SAT master per iteration), so it gets a time
+  budget.
 
 The dense flow-coupled placers (:mod:`factopt.placement.flow` / ``belt``) are not
 yet candidates here: they produce tight *interior* placements but do not route
@@ -29,6 +35,8 @@ from factopt.data.database import Database
 from factopt.mvp import synthesize as _mvp_synthesize
 from factopt.placement.line import synthesize_line
 from factopt.ratios.solver import ProductionPlan, solve_ratios
+
+DEFAULT_STRATEGIES = ("compact", "line", "bus", "benders")
 
 
 @dataclass
@@ -142,18 +150,58 @@ def _try_bus(target: str, rate: float, db: Database) -> Candidate:
     )
 
 
-def optimize(target: str, rate: float, db: Database) -> OptimizedBlock:
+def _try_benders(target: str, rate: float, db: Database, budget_s: float) -> Candidate:
+    from factopt.loop import optimize_loop
+
+    try:
+        res = optimize_loop(
+            target, rate, db, time_budget_s=budget_s, master_time_limit_s=15.0
+        )
+    except Exception as exc:
+        return Candidate("benders", ok=False, detail=f"{type(exc).__name__}: {exc}")
+    if res.best is None:
+        return Candidate(
+            "benders",
+            ok=True,
+            complete=False,
+            detail=f"unrouted after {len(res.iterations)} iteration(s), "
+            f"{len(res.cuts)} cut(s)",
+        )
+    best = res.best
+    return Candidate(
+        strategy="benders",
+        ok=True,
+        complete=True,
+        # Nets are dedicated belts sized by the ratio plan; a validated,
+        # fully-routed block meets the target analytically.
+        meets_target=best.validation.ok,
+        width=best.width,
+        height=best.height,
+        blueprint_string=best.blueprint_string,
+        detail=f"{len(res.iterations)} iteration(s), {len(res.cuts)} cut(s)",
+    )
+
+
+def optimize(
+    target: str,
+    rate: float,
+    db: Database,
+    strategies: tuple[str, ...] = DEFAULT_STRATEGIES,
+    benders_budget_s: float = 180.0,
+) -> OptimizedBlock:
     """Return the tightest complete, target-meeting block for ``rate``/s of
     ``target``, trying every applicable generator."""
     if rate <= 0:
         raise ValueError("rate must be positive")
     plan = solve_ratios(target, rate, db)
 
-    candidates = [
-        _try_compact(target, rate, db),
-        _try_line(target, rate, db),
-        _try_bus(target, rate, db),
-    ]
+    tries = {
+        "compact": lambda: _try_compact(target, rate, db),
+        "line": lambda: _try_line(target, rate, db),
+        "bus": lambda: _try_bus(target, rate, db),
+        "benders": lambda: _try_benders(target, rate, db, benders_budget_s),
+    }
+    candidates = [tries[s]() for s in strategies]
 
     usable = [c for c in candidates if c.usable]
     best = min(usable, key=lambda c: c.area) if usable else None
