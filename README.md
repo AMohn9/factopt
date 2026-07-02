@@ -21,7 +21,7 @@ that constrain the next master solve. See
 | Stage | Module | Method |
 |-------|--------|--------|
 | Ratios / recipe selection | `factopt.ratios` | Linear programming (PuLP/CBC) |
-| Macro cells + ports | `factopt.macros` | Band-based cells, splitter fan-out per net |
+| Macro cells + ports | `factopt.macros` | Band/dense cells, shared belt trunks via pass-through ports |
 | Master placement + coarse routing | `factopt.master` | CP-SAT (no-overlap, coarse flows, cuts) |
 | Detailed routing | `factopt.routing` | Multi-net negotiated congestion over A\* |
 | Cut loop | `factopt.loop` | master → route → explain failures → cuts |
@@ -50,7 +50,10 @@ I/O and game data are handled by:
 **Working end-to-end.** `optimize(item, rate)` returns an importable block for
 every recipe tried so far (green circuits, red science, green science), and the
 general-purpose Benders loop (`factopt.loop`) places, routes, validates, and
-reports candidates with zero layout assumptions. **120 tests pass.**
+reports candidates with zero layout assumptions. A `dense` strategy now packs a
+fusable chain as a **direct-insertion** cell inside that same loop, and items
+feed multiple consumers via **shared belt trunks** (pass-through chaining)
+instead of per-consumer splitter fan-outs. **133 tests pass.**
 
 ### Foundations (done)
 
@@ -84,6 +87,12 @@ Complete generators:
   macro placement + coarse routing, multi-net detailed router, Benders-style
   cuts on failure. Handles arbitrary trees with no layout assumptions; every
   candidate ships with a markdown report and debug SVG (`factopt.report`).
+- [x] `loop.optimize_loop(..., fuse=True)` (`dense`) — the same cut loop with
+  **direct insertion**: a fusable 2-level single-internal-item chain (e.g.
+  copper-cable → electronic-circuit) is packed by `placement.dense.place_dense_row`
+  as one cell where the intermediate is inserted machine-to-machine (never
+  belted), and only its raws + product are routed as boundary I/O. First
+  strategy to emit direct insertion inside the general place-and-route pipeline.
 
 Optimizer components:
 
@@ -91,8 +100,13 @@ Optimizer components:
   (flow-weighted) producer→consumer distance, so producers sit next to consumers
   (exact ≤ 8 recipes, CP-SAT beyond).
 - [x] `macros` — `MacroCell`/`PortCandidate`/`PlacedMacro`: recipe bands wrapped
-  as placeable cells with explicit ports; product fan-out via splitter cascades
-  so every net is a dedicated port-to-port belt.
+  as placeable cells with explicit ports. Items travel on **shared belt trunks**:
+  consumers are partitioned into belt-capacity chains, one belt feeds the first
+  consumer's lane and continues out an east **pass-through port** to the next,
+  so nets are chain hops (rates telescoping) and splitter cascades appear only
+  when an item needs more than one trunk. The Benders loop **re-chains between
+  iterations** (`rechain`): each trunk's visit order is re-derived from the
+  actual placement, so chains and geometry co-evolve.
 - [x] `master` — CP-SAT placement (margin-inflated no-overlap, edge pins, port
   clearance) with a two-stage lexicographic objective (bbox area, then
   rate-weighted flow distance + coarse congestion), plus per-net coarse unit
@@ -109,11 +123,17 @@ Optimizer components:
 - [x] `validate` — static validator: overlap, bounds, inserter pickup/dropoff,
   and directed belt-path checks (splitter- and underground-aware).
 
-Dense placers (interior placement only — no boundary I/O yet):
+Dense placers:
 
+- [x] `placement.dense.place_dense_row` — **boundary-aware** direct-insertion
+  placer: a 2-level single-internal-item chain laid as one horizontal machine
+  row, the intermediate inserted machine-to-machine through gap columns, raws +
+  product on straight full-width edge lanes. Standalone importable and
+  validated; wrapped as a `MacroCell` by the `dense` strategy.
 - [x] `placement.flow.place_flow` — general multi-commodity **vertical
   direct-insertion** slot-grid ILP; minimizes bands. Best for dense, high-rate
-  chains (green circuits at 30/s → 5 bands).
+  chains (green circuits at 30/s → 5 bands). Interior placement only — a
+  multi-band pack has no edge for interior bands to belt raws in / product out.
 - [x] `placement.belt.place_belt` — **belt-lane fan-out** for a single-interior
   2-level chain where one scarce producer feeds many consumers (e.g. red science:
   1 gear → 7 science).
@@ -158,15 +178,25 @@ its markdown report and debug SVG lives in `blueprints/benders/`).
   corridor) and congestion-price cuts on success, so footprints tighten
   instead of ballooning. Master solves are also nondeterministic (parallel
   CP-SAT), so iteration counts vary.
-- **No direct insertion in general chains yet.** `line`/`bus`/`benders` still
-  route intermediates on belts. The consumer-adjacency ordering makes most
-  producer→consumer links adjacent (5 of 6 for green science); the next layer is
-  emitting those as machine-to-machine **direct insertion** (no through-belt),
-  which also fixes the "shared plate/wire lane" contention risk.
-- **Dense placers aren't in `optimize()`.** `place_flow`/`place_belt` produce
-  tight interiors but don't route **boundary I/O** (raws in, product out), so
-  they aren't standalone importable factories. Wiring that in promotes them into
-  the selector.
+- **Direct insertion works via the `dense` strategy (whole chain *and* sub-chain).**
+  `build_problem(fuse=True)` groups recipes into **units**: a fusable
+  producer/consumer pair becomes one dense direct-insertion cell, the rest stay
+  belt bands. This handles green circuits (the whole plan fuses) and green
+  science (only copper-cable → electronic-circuit fuses; gears fan out to the
+  belt and inserter bands on belts). With shared-trunk chaining, green science
+  routes at ~900t with ~150 belt tiles (vs ~1350t / 335 belts for the original
+  per-consumer fan-out) — copper wire direct-inserted, one iron trunk chaining
+  through all four consumers. A geometric finding shaped the cell: the density direct
+  insertion buys (removing lanes) is exactly what removes the edge access
+  interior machines need for their *other* items, so the dense cell is a single
+  row (all machines edge-accessible). Remaining: only single-internal-item pairs
+  fuse (no multi-consumer product fan-out from a dense cell yet), and the overall
+  loop layout is still loose/irregular — tightness is the Benders-tightening
+  roadmap below, not the fusion work.
+- **Multi-band dense placers aren't in `optimize()`.** `place_flow`/`place_belt`
+  produce tight interiors but don't route **boundary I/O** (raws in, product
+  out), so they aren't standalone importable factories on their own (only the
+  single-row `place_dense_row` is).
 - **Belt facing needs in-game verification** for `bus`/`line`/`belt` and the sim
   scenario. Only the `mvp` shared-lane pattern is in-game-verified so far.
 - **Sim is measurement-only and untested end-to-end here** (no Factorio on the

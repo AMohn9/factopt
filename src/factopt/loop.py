@@ -14,7 +14,7 @@ from dataclasses import dataclass, field
 
 from factopt.codec import encode
 from factopt.data.database import Database
-from factopt.macros import MacroProblem, build_problem
+from factopt.macros import MacroProblem, build_problem, rechain
 from factopt.master.cuts import BendersCut
 from factopt.master.model import MasterSolution, solve_master
 from factopt.model.blueprint import Blueprint
@@ -141,11 +141,16 @@ def optimize_loop(
     master_time_limit_s: float = 20.0,
     time_budget_s: float = 240.0,
     label: str | None = None,
+    fuse: bool = False,
 ) -> LoopResult:
-    """Run the Benders loop for ``rate`` items/s of ``target``."""
+    """Run the Benders loop for ``rate`` items/s of ``target``.
+
+    With ``fuse=True``, a fusable 2-level chain is packed as one dense
+    direct-insertion cell (no belt for the internal item) before placement.
+    """
     if plan is None:
         plan = solve_ratios(target, rate, db)
-    problem = build_problem(plan, db, belt=belt)
+    problem = build_problem(plan, db, belt=belt, fuse=fuse)
     label = label or f"{target}-benders-{rate:g}ps"
 
     cuts: list[BendersCut] = []
@@ -153,10 +158,16 @@ def optimize_loop(
     best: Candidate | None = None
     started = time.monotonic()
 
+    prev_placements = None
     for i in range(max_iterations):
         if time.monotonic() - started > time_budget_s:
             break
         margin, slack = _SCHEDULE[min(i, len(_SCHEDULE) - 1)]
+        if prev_placements is not None:
+            # Replace the pre-placement heaviest-first trunk order with the
+            # geometry the previous master actually chose, so this master's
+            # flow-distance objective and the router see consistent chains.
+            rechain(problem, prev_placements)
         master = solve_master(
             problem,
             cuts=cuts,
@@ -171,6 +182,7 @@ def optimize_loop(
             # All placements at this margin are cut off; the schedule will
             # loosen next round.
             continue
+        prev_placements = master.placements
 
         routing = route_nets(problem, master, db, belt=belt)
         it.routing = routing

@@ -19,11 +19,16 @@ Current strategies, in rough preference order:
   master-placement + coarse-routing + detailed-routing cut loop. The most
   general strategy; slower (CP-SAT master per iteration), so it gets a time
   budget.
+* ``dense`` -- the same Benders loop with ``fuse=True``: a fusable 2-level chain
+  (e.g. green circuits) is packed as one dense **direct-insertion** cell (the
+  intermediate is inserted machine-to-machine, never belted) with only its raws
+  and product routed as block boundary I/O. This is the first strategy that
+  emits direct insertion inside the general place-and-route pipeline.
 
-The dense flow-coupled placers (:mod:`factopt.placement.flow` / ``belt``) are not
-yet candidates here: they produce tight *interior* placements but do not route
-block boundary I/O, so they aren't importable factories on their own. They join
-this selection once that routing pass lands.
+The remaining dense flow-coupled placers (:mod:`factopt.placement.flow` /
+``belt``) are still not candidates here: they produce tight *interior*
+placements but do not route block boundary I/O, so they aren't importable
+factories on their own.
 """
 
 from __future__ import annotations
@@ -36,7 +41,7 @@ from factopt.mvp import synthesize as _mvp_synthesize
 from factopt.placement.line import synthesize_line
 from factopt.ratios.solver import ProductionPlan, solve_ratios
 
-DEFAULT_STRATEGIES = ("compact", "line", "bus", "benders")
+DEFAULT_STRATEGIES = ("compact", "line", "bus", "benders", "dense")
 
 
 @dataclass
@@ -150,18 +155,20 @@ def _try_bus(target: str, rate: float, db: Database) -> Candidate:
     )
 
 
-def _try_benders(target: str, rate: float, db: Database, budget_s: float) -> Candidate:
+def _try_loop(
+    strategy: str, target: str, rate: float, db: Database, budget_s: float, fuse: bool
+) -> Candidate:
     from factopt.loop import optimize_loop
 
     try:
         res = optimize_loop(
-            target, rate, db, time_budget_s=budget_s, master_time_limit_s=15.0
+            target, rate, db, time_budget_s=budget_s, master_time_limit_s=15.0, fuse=fuse
         )
     except Exception as exc:
-        return Candidate("benders", ok=False, detail=f"{type(exc).__name__}: {exc}")
+        return Candidate(strategy, ok=False, detail=f"{type(exc).__name__}: {exc}")
     if res.best is None:
         return Candidate(
-            "benders",
+            strategy,
             ok=True,
             complete=False,
             detail=f"unrouted after {len(res.iterations)} iteration(s), "
@@ -169,7 +176,7 @@ def _try_benders(target: str, rate: float, db: Database, budget_s: float) -> Can
         )
     best = res.best
     return Candidate(
-        strategy="benders",
+        strategy=strategy,
         ok=True,
         complete=True,
         # Nets are dedicated belts sized by the ratio plan; a validated,
@@ -199,9 +206,10 @@ def optimize(
         "compact": lambda: _try_compact(target, rate, db),
         "line": lambda: _try_line(target, rate, db),
         "bus": lambda: _try_bus(target, rate, db),
-        "benders": lambda: _try_benders(target, rate, db, benders_budget_s),
+        "benders": lambda: _try_loop("benders", target, rate, db, benders_budget_s, False),
+        "dense": lambda: _try_loop("dense", target, rate, db, benders_budget_s, True),
     }
-    candidates = [tries[s]() for s in strategies]
+    candidates = [tries[s]() for s in strategies if s in tries]
 
     usable = [c for c in candidates if c.usable]
     best = min(usable, key=lambda c: c.area) if usable else None

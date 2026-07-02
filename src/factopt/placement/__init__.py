@@ -22,6 +22,11 @@ from factopt.placement.belt import (
     BeltPlacement,
     place_belt,
 )
+from factopt.placement.dense import (
+    DenseBoundaryPort,
+    DensePlacement,
+    place_dense_row,
+)
 
 __all__ = [
     "place_block",
@@ -38,4 +43,7 @@ __all__ = [
     "place_belt",
     "BeltPlacement",
     "BeltInserter",
+    "place_dense_row",
+    "DensePlacement",
+    "DenseBoundaryPort",
 ]

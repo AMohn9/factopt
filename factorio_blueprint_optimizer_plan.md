@@ -836,6 +836,104 @@ Potential next features:
 
 ---
 
+## Direct insertion (Option A): design notes and status
+
+The band-macro pipeline routes *every* inter-machine flow on belts. Direct
+insertion (machine → machine, no belt) is often tighter — the motivating case is
+a copper-cable machine inserting straight into a green-circuit machine. Option A
+adds direct insertion **incrementally**: fuse a producer+consumer into one dense
+cell whose internal item is inserted machine-to-machine, and let the existing
+master/router/cut loop place and belt-route everything else. The internal item
+becomes no net at all, so the router, validator, and cut families are unchanged.
+
+### The interior-access finding (why the cell is a single row)
+
+The naive plan was "add boundary ports to the multi-band `place_flow` slab." It
+does not work: the density direct insertion buys — removing belt lanes — is
+exactly what removes the edge access that interior machines need for their
+*other* (boundary) items. In a multi-band pack, an interior band has no free
+edge to belt its raws in or product out. (The repo's earlier
+`place_direct_banded` only implemented "layer 1a" and never completed
+green-circuit feeding for this reason.)
+
+The resolution: lay a fused group out as **one horizontal machine row**
+(`placement.dense.place_dense_row`). Producers and consumers interleave; the
+internal item crosses 1-wide inserter columns in the gaps; every machine keeps a
+clear top/bottom edge, so raws and the product ride straight full-width belt
+lanes (raws in west, product out east). This is fully-fed, validated, and
+importable. A small CP-SAT solve orders the row so each consumer's producer
+neighbours cover its demand (using the plan's *actual* per-machine throughput,
+not nameplate, to avoid the rounding-slack infeasibility).
+
+### What is built
+
+- `placement.dense.place_dense_row` — the boundary-aware direct-insertion row.
+- `macros.library._dense_macro` — wraps it as a `MacroCell` (raws → west input
+  ports; product → east output port(s) via the same splitter fan-out bands use;
+  the internal item exposes no port).
+- `placement.dense.plan_fusions` / `subplan_for_group` — pick non-overlapping
+  fusable producer/consumer pairs and build a self-consistent sub-plan for each.
+- `macros.library.build_problem(..., fuse=True)` — a **unit-level** macro graph:
+  each recipe is a unit (a belt band, or a member of a dense cell); nets connect
+  only *external* item flows between units, so a fused internal item makes no
+  net. Handles both the whole-chain case (green circuits) and partial sub-chain
+  fusion inside a deeper tree (green science).
+- `loop.optimize_loop(..., fuse=True)` and the `dense` strategy in `optimize()`.
+
+### Shared belt trunks (pass-through chaining)
+
+The original macro layer enforced "every net is a dedicated port-to-port belt":
+an item with k consumers got a k-branch splitter cascade at its source and k
+independently-routed belts. For green science's iron plate (4 consumers,
+5.5/s total on a 15/s lane) that meant a 7×4 cascade connector plus 4 parallel
+long-haul belts — the single biggest source of sprawl.
+
+Now consumers **share trunks**. `_partition_chains` splits an item's consumers
+into chains that fit one lane's throughput (heaviest consumer first; the
+output collector, which cannot pass items through, is always a chain's
+terminal). A chain is realized with zero new routing machinery: the trunk belt
+enters the first consumer's input lane, rides it past that unit's inserters,
+and exits an east **pass-through port** (`{item}-thru` — the lane's east end,
+no new entities) to hop to the next consumer. Nets are the chain's hops with
+telescoping rates (each hop carries the remaining downstream demand), so the
+master, router, cuts, and validator are untouched. Splitter cascades now appear
+only when an item genuinely needs more than one trunk (flow > one lane).
+
+Trade-off accepted: chaining couples placement (consumer 3's supply routes
+through consumers 1 and 2's lanes). The initial visit order is a pre-placement
+heaviest-first guess, but the loop **re-chains between iterations**
+(`macros.library.rechain`): every consumer on a multi-member trunk carries a
+pass-through port (so any order is realizable without rebuilding macros), and
+after each successful master solve the trunk order is re-derived greedily from
+the actual geometry (nearest next consumer from the current trunk exit) before
+the next solve — so the master's flow-distance objective and the router always
+see chains matching the placement they came from. A band whose input lane row
+collides with its own multi-trunk output cascade cannot pass that item through
+(raises a clear error; exotic corner, not yet hit).
+
+**Status:** green science 1/s (fused + trunked + re-chained) routes and
+validates at ~775 tiles with ~170 belt tiles / 5 undergrounds / 38 turns, vs
+~1350 tiles with 335 belt tiles / 11 undergrounds / 60 turns for the original
+per-consumer fan-out. One iron trunk chains through all four consumers in a
+placement-derived order; copper-cable is direct-inserted inside the dense cell.
+
+### Remaining work toward a tight, aesthetic green-science block
+
+1. **Multi-consumer dense product fan-out.** A dense cell whose product feeds
+   more than one downstream consumer needs a collision-free fan-out (the product
+   lane is sandwiched between the iron/circuit lanes, so the band-style
+   southward splitter cascade collides). Green science avoids this (EC feeds
+   only the inserter), but the general case needs it. Likewise, only
+   single-internal-item pairs fuse today.
+2. **Tightness / aesthetics.** The harder, open-ended part and the Benders
+   loop's known limitation (loose, run-to-run variable): failure-driven spacing
+   (corridor min-cut cuts), congestion-price cuts on success, and deterministic
+   master solves. Trunk chaining removed most of the belt sprawl; the remaining
+   looseness is placement spacing, where the `line`-style band stacking may be
+   the better host for a genuinely "aesthetic" target.
+
+---
+
 ## Important implementation guidance for Codex
 
 1. Keep solver-independent data models pure and serializable.
