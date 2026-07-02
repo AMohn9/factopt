@@ -1,0 +1,162 @@
+"""Top-level block optimizer: pick the best complete block for a goal.
+
+Given a target item and rate, this tries every applicable *complete-block*
+generator, keeps the ones that are importable and meet the target, and returns
+the tightest (smallest footprint). It is the single entrypoint the rest of the
+pipeline (and eventually a Factorio-sim-scored search) plugs into.
+
+Current strategies, in rough preference order:
+
+* ``compact`` -- :func:`factopt.mvp.synthesize`, the tight shared-lane generator.
+  Small footprint but only handles 2-level single-lane chains (green circuits,
+  red science).
+* ``bus`` -- :func:`factopt.bus.synthesize_bus`, the general band+A*-router
+  generator. Handles arbitrary trees (e.g. green science) and always emits a
+  complete block, but is looser.
+
+The dense flow-coupled placers (:mod:`factopt.placement.flow` / ``belt``) are not
+yet candidates here: they produce tight *interior* placements but do not route
+block boundary I/O, so they aren't importable factories on their own. They join
+this selection once that routing pass lands.
+"""
+
+from __future__ import annotations
+
+from dataclasses import dataclass, field
+
+from factopt.bus import synthesize_bus
+from factopt.data.database import Database
+from factopt.mvp import synthesize as _mvp_synthesize
+from factopt.placement.line import synthesize_line
+from factopt.ratios.solver import ProductionPlan, solve_ratios
+
+
+@dataclass
+class Candidate:
+    """One generator's attempt at a block (or why it couldn't produce one)."""
+
+    strategy: str
+    ok: bool
+    complete: bool = False
+    meets_target: bool = False
+    width: int = 0
+    height: int = 0
+    blueprint_string: str = ""
+    detail: str = ""
+
+    @property
+    def area(self) -> int:
+        return self.width * self.height
+
+    @property
+    def usable(self) -> bool:
+        return self.ok and self.complete and self.meets_target
+
+
+@dataclass
+class OptimizedBlock:
+    target: str
+    rate: float
+    plan: ProductionPlan
+    best: Candidate | None
+    candidates: list[Candidate] = field(default_factory=list)
+
+    @property
+    def blueprint_string(self) -> str:
+        if self.best is None:
+            raise ValueError(f"no usable block found for {self.rate:g}/s {self.target}")
+        return self.best.blueprint_string
+
+    def summary(self) -> str:
+        lines = [f"{self.rate:g}/s {self.target}: {self.plan.total_machines} machines"]
+        for c in self.candidates:
+            if not c.ok:
+                lines.append(f"  [skip] {c.strategy:<8} {c.detail}")
+                continue
+            mark = "*best*" if c is self.best else "      "
+            flags = []
+            if not c.complete:
+                flags.append("incomplete")
+            if not c.meets_target:
+                flags.append("under-target")
+            tag = f" ({', '.join(flags)})" if flags else ""
+            lines.append(
+                f"  {mark} {c.strategy:<8} {c.width}x{c.height} = {c.area}t{tag}"
+                + (f"  {c.detail}" if c.detail else "")
+            )
+        if self.best is None:
+            lines.append("  -> no complete, target-meeting block found")
+        return "\n".join(lines)
+
+
+def _try_compact(target: str, rate: float, db: Database) -> Candidate:
+    try:
+        res = _mvp_synthesize(rate, db, target=target)
+    except Exception as exc:
+        return Candidate("compact", ok=False, detail=f"{type(exc).__name__}: {exc}")
+    return Candidate(
+        strategy="compact",
+        ok=True,
+        complete=True,
+        meets_target=res.validation.meets_target,
+        width=res.width,
+        height=res.height,
+        blueprint_string=res.blueprint_string,
+        detail=f"{res.blocks} sub-block(s)",
+    )
+
+
+def _try_line(target: str, rate: float, db: Database) -> Candidate:
+    try:
+        res = synthesize_line(rate, db, target=target)
+    except Exception as exc:
+        return Candidate("line", ok=False, detail=f"{type(exc).__name__}: {exc}")
+    return Candidate(
+        strategy="line",
+        ok=True,
+        complete=res.complete,
+        meets_target=res.complete,
+        width=res.width,
+        height=res.height,
+        blueprint_string=res.blueprint_string,
+        detail=f"unrouted={len(res.unrouted)}" if res.unrouted else "",
+    )
+
+
+def _try_bus(target: str, rate: float, db: Database) -> Candidate:
+    try:
+        res = synthesize_bus(rate, db, target=target)
+    except Exception as exc:
+        return Candidate("bus", ok=False, detail=f"{type(exc).__name__}: {exc}")
+    return Candidate(
+        strategy="bus",
+        ok=True,
+        complete=res.complete,
+        # A fully-routed bus block belts every flow sized to the plan, so it meets
+        # the target analytically; unrouted nets mean it does not.
+        meets_target=res.complete,
+        width=res.width,
+        height=res.height,
+        blueprint_string=res.blueprint_string,
+        detail=f"unrouted={len(res.unrouted)}" if res.unrouted else "",
+    )
+
+
+def optimize(target: str, rate: float, db: Database) -> OptimizedBlock:
+    """Return the tightest complete, target-meeting block for ``rate``/s of
+    ``target``, trying every applicable generator."""
+    if rate <= 0:
+        raise ValueError("rate must be positive")
+    plan = solve_ratios(target, rate, db)
+
+    candidates = [
+        _try_compact(target, rate, db),
+        _try_line(target, rate, db),
+        _try_bus(target, rate, db),
+    ]
+
+    usable = [c for c in candidates if c.usable]
+    best = min(usable, key=lambda c: c.area) if usable else None
+    return OptimizedBlock(
+        target=target, rate=rate, plan=plan, best=best, candidates=candidates
+    )

@@ -1,0 +1,5 @@
+{
+  "name": "factopt_sim",
+  "order": "factopt",
+  "description": "factopt headless throughput-measurement harness."
+}
