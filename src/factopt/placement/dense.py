@@ -1,18 +1,17 @@
 """Boundary-aware dense placement: a direct-insertion machine row with I/O.
 
-:mod:`factopt.placement.flow` proved the density trick -- couple internal item
-flow as machine-to-machine **direct insertion** instead of belts -- but it packs
-machines into a *vertical* band grid and leaves raw-in / product-out to a later
-pass. That leaves interior bands with no edge to belt their raws in or product
-out, so a multi-band pack is never a standalone importable block.
+The density trick is to couple internal item flow as machine-to-machine
+**direct insertion** instead of belts. Packing machines into a *vertical* band
+grid would leave interior bands with no edge to belt their raws in or product
+out, so a multi-band pack could never be a standalone importable block.
 
-This module takes the complementary, self-contained approach: lay the whole
-group out as **one horizontal machine row** and move the internal item sideways
-between neighbouring machines through 1-wide inserter columns in the gaps. Every
+This module takes the self-contained approach instead: lay the whole group out
+as **one horizontal machine row** and move the internal item sideways between
+neighbouring machines through 1-wide inserter columns in the gaps. Every
 machine then keeps a clear top and bottom edge, so the block's boundary items
 ride straight full-width belt lanes (raws enter west, product leaves east) --
-exactly the verified geometry of :mod:`factopt.mvp`, minus the shared
-intermediate lane the direct insertion replaces.
+the classic shared-lane geometry, minus the shared intermediate lane the direct
+insertion replaces. It is wrapped as a `MacroCell` by the `dense` strategy.
 
     copper-plate lane   ─────────────────────────────   (west in)
        [ top inserters ]  cable machines pick plate
@@ -328,7 +327,7 @@ def place_dense_row(
     # Per-machine crafts/s is the plan's *actual* throughput (evenly shared over a
     # line's machines), NOT the machine's nameplate: counts are rounded up, so
     # nameplate intake exceeds demand and would make the flow balance infeasible
-    # whenever there is rounding slack (see factopt.placement.flow).
+    # whenever there is rounding slack.
     def per_machine(recipe_name: str) -> float:
         line = next(ln for ln in plan.lines if ln.recipe == recipe_name)
         return line.crafts_per_sec / line.machines

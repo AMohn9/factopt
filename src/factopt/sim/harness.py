@@ -1,7 +1,7 @@
 """Headless-Factorio simulation harness: measure a block's true throughput.
 
-The analytical evaluator (:mod:`factopt.evaluate`) *estimates* throughput; this
-harness measures the real thing by building the blueprint in a headless Factorio
+The loop's objective is analytical; this harness measures the real thing --
+by building the blueprint in a headless Factorio
 instance, feeding its raw inputs from infinity chests, powering it from an
 electric-energy-interface, running it at high speed, and reading the output
 item's production rate from the force's flow statistics. That measured items/sec

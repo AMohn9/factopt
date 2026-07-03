@@ -1,7 +1,6 @@
 import pytest
 
-from factopt.data import vanilla
-from factopt.mvp import synthesize
+from factopt.model.blueprint import EAST, Blueprint, Entity, Position
 from factopt.sim import (
     FactorioNotFound,
     SimJob,
@@ -10,8 +9,6 @@ from factopt.sim import (
     belt_endpoints,
     run_headless,
 )
-
-DB = vanilla.DB
 
 
 def test_job_to_lua_is_wellformed():
@@ -58,12 +55,19 @@ def test_run_headless_raises_without_factorio(tmp_path):
 
 
 def test_belt_endpoints_finds_open_ended_belts():
-    # A real generated block has open-ended input/output belts on its boundary.
-    res = synthesize(5.0, DB)  # green circuits: has raw-in and product-out lanes
-    eps = belt_endpoints(res.blueprint)
+    # A short eastbound belt run: the first tile has nothing feeding it (input
+    # endpoint) and the last tile has nothing ahead (output endpoint).
+    width, height = 3, 1
+    bp = Blueprint(
+        entities=[
+            Entity("transport-belt", Position(x + 0.5, 0.5), direction=EAST)
+            for x in range(width)
+        ]
+    )
+    eps = belt_endpoints(bp)
     kinds = {e.kind for e in eps}
     assert "input" in kinds and "output" in kinds
     # Every endpoint sits on a belt tile within the block bounds.
     for e in eps:
-        assert 0 <= e.x < res.width
-        assert 0 <= e.y < res.height
+        assert 0 <= e.x < width
+        assert 0 <= e.y < height

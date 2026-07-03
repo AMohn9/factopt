@@ -44,11 +44,11 @@ def test_optimize_includes_benders_strategy():
     # Small problem (2-level chain) so the loop converges quickly.
     ob = optimize(
         "electronic-circuit", 2.0, DB,
-        strategies=("line", "benders"), benders_budget_s=180.0,
+        strategies=("benders",), benders_budget_s=180.0,
     )
     benders = next(c for c in ob.candidates if c.strategy == "benders")
     assert benders.ok, benders.detail
     assert benders.usable, benders.detail
     assert ob.best is not None
     summary = ob.summary()
-    assert "benders" in summary and "line" in summary
+    assert "benders" in summary

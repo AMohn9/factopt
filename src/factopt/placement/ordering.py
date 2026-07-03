@@ -2,8 +2,8 @@
 
 Chooses a 1-D order of the plan's recipes minimizing total flow-weighted
 producer->consumer distance, so heavy links (e.g. copper-cable ->
-electronic-circuit) end up adjacent. Used by :mod:`factopt.placement.line` to
-drive band stacking, and useful as a seed for any linear layout.
+electronic-circuit) end up adjacent. A general utility seed for any linear
+layout (e.g. deterministic band ordering in tests).
 
 Cost model: for each (producer recipe, consumer recipe, item) link the weight
 is the consumer's item draw in items/s; the cost of an order is

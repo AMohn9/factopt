@@ -123,6 +123,36 @@ def _assign_lanes(
     return assign
 
 
+def _fit_near_inserter(
+    recipe, db: Database, inserter: str, long_inserter: str, assembler: str
+) -> str:
+    """Pick the near (reach-1) inserter for this band's machine sides.
+
+    Starts from the requested inserter and escalates to a faster reach-1
+    inserter (e.g. the bulk/``stack-inserter``) *only* when the requested set
+    over-subscribes a 3-slot machine side, so low-flow bands keep the cheap
+    default while high-throughput rows (e.g. ``rail`` for purple science) get
+    the inserter they physically need. A recipe touching more than four items,
+    or a far lane that over-subscribes, is not fixable this way and re-raises.
+    """
+    base_rate = db.inserters[inserter].rate
+    faster = sorted(
+        (i for i in db.inserters.values() if i.reach == 1 and i.rate > base_rate),
+        key=lambda i: i.rate,
+    )
+    last_err: ValueError | None = None
+    for name in [inserter, *(i.name for i in faster)]:
+        try:
+            _assign_lanes(recipe, db, name, long_inserter, assembler)
+            return name
+        except ValueError as e:
+            if "touches" in str(e):
+                raise  # too many distinct items; a faster inserter can't help.
+            last_err = e
+    assert last_err is not None
+    raise last_err
+
+
 def _layout_rows(lanes: dict[str, LaneAssign]) -> tuple[dict[str, int], int, int, int, int]:
     """Compute dynamic row offsets, dropping unused far-lane rows so 2-item
     recipes are shorter than 4-item ones. Returns
@@ -177,6 +207,7 @@ def build_band(
     lanes get belts (e.g. raws + the output), leaving the rest for the bus
     router to fill; ``None`` means all lanes."""
     recipe = db.recipes[recipe_name]
+    inserter = _fit_near_inserter(recipe, db, inserter, long_inserter, assembler)
     lanes = _assign_lanes(recipe, db, inserter, long_inserter, assembler)
     lane_row, machine_row, top_ins_row, bot_ins_row, height = _layout_rows(lanes)
     width = max(3 * n_machines, 1)

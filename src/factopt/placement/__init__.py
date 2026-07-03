@@ -1,27 +1,11 @@
-"""Spatial placement of block entities (CP-SAT)."""
+"""Spatial placement of block entities.
 
-from factopt.placement.cpsat import (
-    Placement,
-    PlacedEntity,
-    PlacedInserter,
-    place_block,
-)
-from factopt.placement.direct import (
-    DirectInserter,
-    DirectPlacement,
-    place_direct,
-    place_direct_banded,
-)
-from factopt.placement.flow import (
-    FlowInserter,
-    FlowPlacement,
-    place_flow,
-)
-from factopt.placement.belt import (
-    BeltInserter,
-    BeltPlacement,
-    place_belt,
-)
+Only the dense direct-insertion row placer remains here: it is the one placer
+wired into the general place-and-route loop (wrapped as a ``MacroCell`` by the
+``dense`` strategy in :mod:`factopt.macros.library`). Recipe ordering for
+placement lives in :mod:`factopt.placement.ordering`.
+"""
+
 from factopt.placement.dense import (
     DenseBoundaryPort,
     DensePlacement,
@@ -29,20 +13,6 @@ from factopt.placement.dense import (
 )
 
 __all__ = [
-    "place_block",
-    "Placement",
-    "PlacedEntity",
-    "PlacedInserter",
-    "place_direct",
-    "place_direct_banded",
-    "DirectPlacement",
-    "DirectInserter",
-    "place_flow",
-    "FlowPlacement",
-    "FlowInserter",
-    "place_belt",
-    "BeltPlacement",
-    "BeltInserter",
     "place_dense_row",
     "DensePlacement",
     "DenseBoundaryPort",

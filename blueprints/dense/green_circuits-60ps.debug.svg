@@ -1,0 +1,68 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="792" height="228" viewBox="-12 -12 792 228" font-family="monospace">
+<rect x="0" y="0" width="768" height="204" fill="#fafafa" stroke="#444"/>
+<line x1="0" y1="0" x2="0" y2="204" stroke="#ddd" stroke-width="1"/>
+<line x1="48" y1="0" x2="48" y2="204" stroke="#ddd" stroke-width="1"/>
+<line x1="96" y1="0" x2="96" y2="204" stroke="#ddd" stroke-width="1"/>
+<line x1="144" y1="0" x2="144" y2="204" stroke="#ddd" stroke-width="1"/>
+<line x1="192" y1="0" x2="192" y2="204" stroke="#ddd" stroke-width="1"/>
+<line x1="240" y1="0" x2="240" y2="204" stroke="#ddd" stroke-width="1"/>
+<line x1="288" y1="0" x2="288" y2="204" stroke="#ddd" stroke-width="1"/>
+<line x1="336" y1="0" x2="336" y2="204" stroke="#ddd" stroke-width="1"/>
+<line x1="384" y1="0" x2="384" y2="204" stroke="#ddd" stroke-width="1"/>
+<line x1="432" y1="0" x2="432" y2="204" stroke="#ddd" stroke-width="1"/>
+<line x1="480" y1="0" x2="480" y2="204" stroke="#ddd" stroke-width="1"/>
+<line x1="528" y1="0" x2="528" y2="204" stroke="#ddd" stroke-width="1"/>
+<line x1="576" y1="0" x2="576" y2="204" stroke="#ddd" stroke-width="1"/>
+<line x1="624" y1="0" x2="624" y2="204" stroke="#ddd" stroke-width="1"/>
+<line x1="672" y1="0" x2="672" y2="204" stroke="#ddd" stroke-width="1"/>
+<line x1="720" y1="0" x2="720" y2="204" stroke="#ddd" stroke-width="1"/>
+<line x1="768" y1="0" x2="768" y2="204" stroke="#ddd" stroke-width="1"/>
+<line x1="0" y1="0" x2="768" y2="0" stroke="#ddd" stroke-width="1"/>
+<line x1="0" y1="48" x2="768" y2="48" stroke="#ddd" stroke-width="1"/>
+<line x1="0" y1="96" x2="768" y2="96" stroke="#ddd" stroke-width="1"/>
+<line x1="0" y1="144" x2="768" y2="144" stroke="#ddd" stroke-width="1"/>
+<line x1="0" y1="192" x2="768" y2="192" stroke="#ddd" stroke-width="1"/>
+<line x1="0" y1="240" x2="768" y2="240" stroke="#ddd" stroke-width="1"/>
+<line x1="0" y1="288" x2="768" y2="288" stroke="#ddd" stroke-width="1"/>
+<line x1="0" y1="336" x2="768" y2="336" stroke="#ddd" stroke-width="1"/>
+<line x1="0" y1="384" x2="768" y2="384" stroke="#ddd" stroke-width="1"/>
+<line x1="0" y1="432" x2="768" y2="432" stroke="#ddd" stroke-width="1"/>
+<line x1="0" y1="480" x2="768" y2="480" stroke="#ddd" stroke-width="1"/>
+<line x1="0" y1="528" x2="768" y2="528" stroke="#ddd" stroke-width="1"/>
+<line x1="0" y1="576" x2="768" y2="576" stroke="#ddd" stroke-width="1"/>
+<line x1="0" y1="624" x2="768" y2="624" stroke="#ddd" stroke-width="1"/>
+<line x1="0" y1="672" x2="768" y2="672" stroke="#ddd" stroke-width="1"/>
+<line x1="0" y1="720" x2="768" y2="720" stroke="#ddd" stroke-width="1"/>
+<line x1="0" y1="768" x2="768" y2="768" stroke="#ddd" stroke-width="1"/>
+<line x1="24.0" y1="24.0" x2="24.0" y2="72.0" stroke="#8abf8a" stroke-width="3.0" opacity="0.7"/>
+<line x1="24.0" y1="72.0" x2="24.0" y2="120.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
+<line x1="24.0" y1="216.0" x2="72.0" y2="216.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
+<line x1="72.0" y1="216.0" x2="120.0" y2="216.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
+<line x1="120.0" y1="216.0" x2="168.0" y2="216.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
+<line x1="168.0" y1="216.0" x2="216.0" y2="216.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
+<line x1="696.0" y1="120.0" x2="744.0" y2="120.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
+<line x1="696.0" y1="168.0" x2="744.0" y2="168.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
+<line x1="744.0" y1="72.0" x2="744.0" y2="120.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
+<rect x="24" y="0" width="720" height="84" fill="#cfe3f7" stroke="#333" opacity="0.9"/>
+<text x="27.599999999999998" y="12" font-size="10">copper-cable</text>
+<circle cx="738.0" cy="78.0" r="4" fill="#d62728"><title>copper-cable.copper-cable-out-0</title></circle>
+<circle cx="30.0" cy="6.0" r="4" fill="#1f77b4"><title>copper-cable.copper-plate-in</title></circle>
+<rect x="216" y="108" width="504" height="96" fill="#cfe3f7" stroke="#333" opacity="0.9"/>
+<text x="219.60000000000002" y="120" font-size="10">electronic-circuit</text>
+<circle cx="714.0" cy="186.0" r="4" fill="#d62728"><title>electronic-circuit.electronic-circuit-out-0</title></circle>
+<circle cx="714.0" cy="114.0" r="4" fill="#1f77b4"><title>electronic-circuit.copper-cable-in</title></circle>
+<circle cx="222.0" cy="198.0" r="4" fill="#1f77b4"><title>electronic-circuit.iron-plate-in</title></circle>
+<rect x="0" y="108" width="24" height="12" fill="#d9f2d9" stroke="#333" opacity="0.9"/>
+<text x="3.5999999999999996" y="120" font-size="10">in-copper-plate</text>
+<circle cx="18.0" cy="114.0" r="4" fill="#d62728"><title>in-copper-plate.copper-plate-out-0</title></circle>
+<rect x="0" y="192" width="24" height="12" fill="#d9f2d9" stroke="#333" opacity="0.9"/>
+<text x="3.5999999999999996" y="204" font-size="10">in-iron-plate</text>
+<circle cx="18.0" cy="198.0" r="4" fill="#d62728"><title>in-iron-plate.iron-plate-out-0</title></circle>
+<rect x="744" y="180" width="24" height="12" fill="#f7ddc7" stroke="#333" opacity="0.9"/>
+<text x="747.5999999999999" y="192" font-size="10">out</text>
+<circle cx="750.0" cy="186.0" r="4" fill="#1f77b4"><title>out.electronic-circuit-in</title></circle>
+<polyline points="750.0,78.0 750.0,90.0 750.0,102.0 750.0,114.0 738.0,114.0 726.0,114.0" fill="none" stroke="#6a3d9a" stroke-width="2" opacity="0.8"><title>copper-cable:copper-cable-t0[0]</title></polyline>
+<polyline points="30.0,114.0 30.0,102.0 30.0,90.0 18.0,90.0 18.0,78.0 18.0,66.0 18.0,54.0 18.0,42.0 18.0,30.0 18.0,18.0 18.0,6.0" fill="none" stroke="#6a3d9a" stroke-width="2" opacity="0.8"><title>copper-plate:in-copper-plate-t0[0]</title></polyline>
+<polyline points="726.0,186.0 738.0,186.0" fill="none" stroke="#6a3d9a" stroke-width="2" opacity="0.8"><title>electronic-circuit:electronic-circuit-t0[0]</title></polyline>
+<polyline points="30.0,198.0 42.0,198.0 54.0,198.0 66.0,198.0 78.0,198.0 90.0,198.0 102.0,198.0 114.0,198.0 126.0,198.0 138.0,198.0 150.0,198.0 162.0,198.0 174.0,198.0 186.0,198.0 198.0,198.0 210.0,198.0" fill="none" stroke="#6a3d9a" stroke-width="2" opacity="0.8"><title>iron-plate:in-iron-plate-t0[0]</title></polyline>
+</svg>

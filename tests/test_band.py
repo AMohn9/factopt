@@ -62,26 +62,6 @@ def test_band_blueprint_roundtrips():
     assert any(e.name == "long-handed-inserter" for e in back.entities)
 
 
-def test_green_science_bus_complete_and_valid():
-    from factopt.bus import synthesize_bus
-
-    res = synthesize_bus(1.0, DB, "logistic-science-pack")
-    assert res.complete and not res.unrouted
-    # Every consumer link (raws + intermediates) routed; 6 intermediate links.
-    assert sum(1 for c in res.connections if c[1] != "raw") == 6
-    _assert_no_overlap(res.blueprint.entities)
-    # Contains all six recipes' machines.
-    recipes = {e.recipe for e in res.blueprint.entities if e.recipe}
-    assert recipes == {
-        "copper-cable",
-        "iron-gear-wheel",
-        "electronic-circuit",
-        "inserter",
-        "transport-belt",
-        "logistic-science-pack",
-    }
-
-
 def test_band_rejects_too_many_items():
     # logistic-science-pack is fine (3 items); craft a synthetic 5-item check
     # by asserting the guard via a recipe that is within range stays ok.

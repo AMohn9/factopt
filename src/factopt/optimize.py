@@ -1,52 +1,41 @@
 """Top-level block optimizer: pick the best complete block for a goal.
 
-Given a target item and rate, this tries every applicable *complete-block*
-generator, keeps the ones that are importable and meet the target, and returns
-the tightest (smallest footprint). It is the single entrypoint the rest of the
-pipeline (and eventually a Factorio-sim-scored search) plugs into.
+Given a target item and rate, this runs the general-purpose Benders cut loop
+(:func:`factopt.loop.optimize_loop`) in its two flavours, keeps the ones that
+are importable and meet the target, and returns the tightest (smallest
+footprint). It is the single entrypoint the rest of the pipeline (and
+eventually a Factorio-sim-scored search) plugs into.
 
-Current strategies, in rough preference order:
+Strategies:
 
-* ``compact`` -- :func:`factopt.mvp.synthesize`, the tight shared-lane generator.
-  Small footprint but only handles 2-level single-lane chains (green circuits,
-  red science).
-* ``line`` -- :func:`factopt.placement.line.synthesize_line`, ordering-driven
-  band stacking with the tightest routable gaps.
-* ``bus`` -- :func:`factopt.bus.synthesize_bus`, the general band+A*-router
-  generator. Handles arbitrary trees (e.g. green science) and always emits a
-  complete block, but is looser.
-* ``benders`` -- :func:`factopt.loop.optimize_loop`, the general-purpose
-  master-placement + coarse-routing + detailed-routing cut loop. The most
-  general strategy; slower (CP-SAT master per iteration), so it gets a time
-  budget.
-* ``dense`` -- the same Benders loop with ``fuse=True``: a fusable 2-level chain
-  (e.g. green circuits) is packed as one dense **direct-insertion** cell (the
+* ``benders`` -- the CP-SAT master-placement + coarse-routing + detailed-routing
+  cut loop. The general strategy with no layout assumptions; slower (a CP-SAT
+  master per iteration), so it gets a time budget.
+* ``dense`` -- the same loop with ``fuse=True``: a fusable 2-level chain (e.g.
+  green circuits) is packed as one dense **direct-insertion** cell (the
   intermediate is inserted machine-to-machine, never belted) with only its raws
-  and product routed as block boundary I/O. This is the first strategy that
-  emits direct insertion inside the general place-and-route pipeline.
+  and product routed as block boundary I/O.
 
-The remaining dense flow-coupled placers (:mod:`factopt.placement.flow` /
-``belt``) are still not candidates here: they produce tight *interior*
-placements but do not route block boundary I/O, so they aren't importable
-factories on their own.
+Both are thin wrappers over :func:`factopt.loop.optimize_loop` (see
+``scripts/steiner_run.py`` for the same call used interactively). The earlier
+hand-rolled generators (``compact``/``mvp``, ``bus``, ``line``) and the
+interior-only research placers have been removed now that the loop is the
+standard place-and-route path.
 """
 
 from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from factopt.bus import synthesize_bus
 from factopt.data.database import Database
-from factopt.mvp import synthesize as _mvp_synthesize
-from factopt.placement.line import synthesize_line
 from factopt.ratios.solver import ProductionPlan, solve_ratios
 
-DEFAULT_STRATEGIES = ("compact", "line", "bus", "benders", "dense")
+DEFAULT_STRATEGIES = ("benders", "dense")
 
 
 @dataclass
 class Candidate:
-    """One generator's attempt at a block (or why it couldn't produce one)."""
+    """One strategy's attempt at a block (or why it couldn't produce one)."""
 
     strategy: str
     ok: bool
@@ -102,59 +91,6 @@ class OptimizedBlock:
         return "\n".join(lines)
 
 
-def _try_compact(target: str, rate: float, db: Database) -> Candidate:
-    try:
-        res = _mvp_synthesize(rate, db, target=target)
-    except Exception as exc:
-        return Candidate("compact", ok=False, detail=f"{type(exc).__name__}: {exc}")
-    return Candidate(
-        strategy="compact",
-        ok=True,
-        complete=True,
-        meets_target=res.validation.meets_target,
-        width=res.width,
-        height=res.height,
-        blueprint_string=res.blueprint_string,
-        detail=f"{res.blocks} sub-block(s)",
-    )
-
-
-def _try_line(target: str, rate: float, db: Database) -> Candidate:
-    try:
-        res = synthesize_line(rate, db, target=target)
-    except Exception as exc:
-        return Candidate("line", ok=False, detail=f"{type(exc).__name__}: {exc}")
-    return Candidate(
-        strategy="line",
-        ok=True,
-        complete=res.complete,
-        meets_target=res.complete,
-        width=res.width,
-        height=res.height,
-        blueprint_string=res.blueprint_string,
-        detail=f"unrouted={len(res.unrouted)}" if res.unrouted else "",
-    )
-
-
-def _try_bus(target: str, rate: float, db: Database) -> Candidate:
-    try:
-        res = synthesize_bus(rate, db, target=target)
-    except Exception as exc:
-        return Candidate("bus", ok=False, detail=f"{type(exc).__name__}: {exc}")
-    return Candidate(
-        strategy="bus",
-        ok=True,
-        complete=res.complete,
-        # A fully-routed bus block belts every flow sized to the plan, so it meets
-        # the target analytically; unrouted nets mean it does not.
-        meets_target=res.complete,
-        width=res.width,
-        height=res.height,
-        blueprint_string=res.blueprint_string,
-        detail=f"unrouted={len(res.unrouted)}" if res.unrouted else "",
-    )
-
-
 def _try_loop(
     strategy: str,
     target: str,
@@ -207,17 +143,14 @@ def optimize(
     workers: int | None = None,
 ) -> OptimizedBlock:
     """Return the tightest complete, target-meeting block for ``rate``/s of
-    ``target``, trying every applicable generator. ``backend`` selects the
-    master solver engine for the loop strategies (``"cpsat"`` or ``"scip"``);
-    ``workers`` sets the CP-SAT portfolio size (``None`` = all cores)."""
+    ``target``, running the Benders loop in each requested flavour. ``backend``
+    selects the master solver engine (``"cpsat"`` or ``"scip"``); ``workers``
+    sets the CP-SAT portfolio size (``None`` = all cores)."""
     if rate <= 0:
         raise ValueError("rate must be positive")
     plan = solve_ratios(target, rate, db)
 
     tries = {
-        "compact": lambda: _try_compact(target, rate, db),
-        "line": lambda: _try_line(target, rate, db),
-        "bus": lambda: _try_bus(target, rate, db),
         "benders": lambda: _try_loop(
             "benders", target, rate, db, benders_budget_s, False, backend, workers
         ),
