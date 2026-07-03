@@ -55,7 +55,10 @@ fusable chain as a **direct-insertion** cell inside that same loop, and items
 feed multiple consumers via **Steiner-tree routing**: one net per belt trunk
 with all its sinks, grown as a real belt tree with splitters dropped at the
 junctions (the VLSI-style answer, replacing the earlier pass-through
-chaining). **147 tests pass.**
+chaining). **Input belt lanes are reversible** — since machines only *pick*
+from an input lane, the master feeds each from whichever end (west/east, or
+north/south once rotated) shortens the route, decided as a per-lane variable
+alongside the quarter-turn orientation. **154 tests pass.**
 
 ### Foundations (done)
 
@@ -126,7 +129,11 @@ Optimizer components:
   placement-dependent boundary capacities. Macros also get a
   **quarter-turn orientation variable** (`macros.cell.rotated`): bands can face
   any direction, with ports, lanes, inserters, and coarse capacities rotating
-  consistently (edge-pinned I/O macros stay fixed).
+  consistently (edge-pinned I/O macros stay fixed). Each **input lane is also
+  reversible** (`macros.cell.PortCandidate.reverse`): a per-lane boolean picks
+  which end feeds it, so HPWL, port clearance, coarse capacities, and cuts all
+  see the chosen side; the router and entity emission flip just that lane's
+  belts. This doubles a lane's approach options without rotating the whole cell.
 - [x] `routing.multinet` — PathFinder-style negotiated congestion (present +
   history costs) over whole **trees**: a contested net rips up its entire tree
   and re-grows it, targeted rip-up for stragglers, underground cross-capture
@@ -172,7 +179,7 @@ Dense placers:
 |------|------------------|-----------|-------|
 | Green circuits 5/s | `compact` | 15×14 = 210t | shared-lane |
 | Green circuits 30/s | `compact` | 92×14 = 1288t | 2 tiled sub-blocks |
-| Green science 1/s | `line` | 41×23 = 943t | `benders` also routes it (~1040–1400t with rotation, varies by run) |
+| Green science 1/s | `benders` | 19×32 = 608t | best routed `benders`/steiner run (100 belt tiles); reversible input lanes tightened it below the earlier 609–672t; `line` gives 41×23 = 943t; varies by run |
 
 `line` still wins green science on footprint; `benders` is the only strategy
 with no structural layout assumptions, and its footprint is expected to drop
@@ -215,7 +222,15 @@ its markdown report and debug SVG lives in `blueprints/benders/`).
   out), so they aren't standalone importable factories on their own (only the
   single-row `place_dense_row` is).
 - **Belt facing needs in-game verification** for `bus`/`line`/`belt` and the sim
-  scenario. Only the `mvp` shared-lane pattern is in-game-verified so far.
+  scenario. Only the `mvp` shared-lane pattern is in-game-verified so far. This
+  now includes **reverse-fed input lanes** (belts flowing east→west across a
+  band, inserters picking off them unchanged) — physically standard but not yet
+  confirmed in-game.
+- **Only input lanes are reversible; output lanes still fan out east.** The
+  output splitter cascade (`_fanout_east`) is baked toward the east edge, so a
+  product trunk can't yet be collected from either side. Making the fanout
+  direction-agnostic is the follow-up that would let the router approach a
+  producer's output from either end too.
 - **Sim is measurement-only and untested end-to-end here** (no Factorio on the
   dev machine): launch flags, source wiring, and the statistics API call are
   written defensively but flagged for first-run verification.

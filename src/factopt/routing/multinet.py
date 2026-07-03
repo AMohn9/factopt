@@ -164,9 +164,9 @@ def route_nets(
             dp = dst_pm.cell.port(fs.port)
             sinks.append(
                 _Sink(macro=fs.macro, port=fs.port, goal=dst_pm.port_access_tile(dp),
-                      goal_dir=dp.flow_entry_dir)
+                      goal_dir=dst_pm.port_flow_dir(dp))
             )
-        record = _Net(net=net, start=start, start_dir=sp.flow_entry_dir, sinks=sinks)
+        record = _Net(net=net, start=start, start_dir=src_pm.port_flow_dir(sp), sinks=sinks)
 
         bad_tile = None
         for t in [start] + [s.goal for s in sinks]:

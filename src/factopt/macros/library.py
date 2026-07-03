@@ -27,8 +27,15 @@ from dataclasses import dataclass, field
 
 from factopt.band import build_band
 from factopt.data.database import Database
-from factopt.macros.cell import MacroCell, PlacedMacro, PortCandidate, Side
-from factopt.model.blueprint import EAST, Entity, Position
+from factopt.macros.cell import (
+    MacroCell,
+    PlacedMacro,
+    PortCandidate,
+    PortEnd,
+    ReversibleLane,
+    Side,
+)
+from factopt.model.blueprint import EAST, WEST, Entity, Position
 from factopt.placement.dense import (
     DensePlacement,
     place_dense_row,
@@ -36,6 +43,7 @@ from factopt.placement.dense import (
     subplan_for_group,
 )
 from factopt.ratios.solver import ProductionPlan
+from factopt.validate import entity_tiles
 
 _SPLITTER_OF = {
     "transport-belt": "splitter",
@@ -128,6 +136,71 @@ def _fanout_east(
     return ports, end_col + 1, row + k - 1
 
 
+def _input_lane_port(
+    entities: list[Entity],
+    belt: str,
+    item: str,
+    row: int,
+    lane_end: int,
+    cell_width: int,
+    cap: float,
+    db: Database,
+    port_id: str | None = None,
+) -> tuple[PortCandidate, ReversibleLane | None]:
+    """Build an input port for a horizontal lane that already spans columns
+    ``[0, lane_end)`` at ``row``.
+
+    Machines only *pick* from an input lane, so it can be fed from either end.
+    When the lane can be extended east to the cell's edge without hitting any
+    other entity, the port becomes **reversible**: the primary end feeds it
+    from the west (belts flow EAST), the reverse end from the east (belts flow
+    WEST). The extension belts are appended and a :class:`ReversibleLane`
+    describing the lane's tiles is returned so emission can flip them. If the
+    east edge is blocked (e.g. by an output fanout), the port is west-only.
+    """
+    pid = port_id or f"{item}-in"
+    occupied: set[tuple[int, int]] = set()
+    for e in entities:
+        occupied.update(entity_tiles(e, db))
+
+    ext_cols = list(range(lane_end, cell_width))
+    can_reverse = all((c, row) not in occupied for c in ext_cols)
+
+    port = PortCandidate(
+        id=pid,
+        item=item,
+        direction="input",
+        side="west",
+        local_position=(0, row),
+        flow_entry_dir=EAST,
+        max_rate_per_sec=cap,
+    )
+    if not can_reverse:
+        return port, None
+
+    for c in ext_cols:
+        entities.append(
+            Entity(name=belt, position=Position(c + 0.5, row + 0.5), direction=EAST)
+        )
+    east_end = cell_width - 1
+    port = PortCandidate(
+        id=pid,
+        item=item,
+        direction="input",
+        side="west",
+        local_position=(0, row),
+        flow_entry_dir=EAST,
+        max_rate_per_sec=cap,
+        reverse=PortEnd(side="east", local_position=(east_end, row), flow_entry_dir=WEST),
+    )
+    lane = ReversibleLane(
+        tiles=tuple((x, row) for x in range(cell_width)),
+        forward_dir=EAST,
+        reverse_dir=WEST,
+    )
+    return port, lane
+
+
 def _band_macro(
     recipe: str,
     n_machines: int,
@@ -152,23 +225,14 @@ def _band_macro(
     entities = list(band.entities)
     ports: list[PortCandidate] = []
 
+    in_slots = [(slot, a) for slot, a in band.lanes.items() if a.flow_dir == "in"]
     out_slot, out_item = None, None
     for slot, a in band.lanes.items():
-        if a.flow_dir == "in":
-            ports.append(
-                PortCandidate(
-                    id=f"{a.item}-in",
-                    item=a.item,
-                    direction="input",
-                    side="west",
-                    local_position=(0, band.lane_row[slot]),
-                    flow_entry_dir=EAST,
-                    max_rate_per_sec=cap,
-                )
-            )
-        else:
+        if a.flow_dir == "out":
             out_slot, out_item = slot, a.item
 
+    # Output fanout first: it fixes the cell width the input lanes may reverse
+    # against (a lane can only be fed from the east if it reaches the edge).
     width, height = band.width, band.height
     if out_slot is not None and n_out >= 1:
         out_row = band.lane_row[out_slot]
@@ -190,6 +254,15 @@ def _band_macro(
                 )
             )
 
+    reversible_lanes: dict[str, ReversibleLane] = {}
+    for slot, a in in_slots:
+        port, lane = _input_lane_port(
+            entities, belt, a.item, band.lane_row[slot], band.width, width, cap, db
+        )
+        ports.append(port)
+        if lane is not None:
+            reversible_lanes[port.id] = lane
+
     return MacroCell(
         id=recipe,
         kind="recipe-band",
@@ -197,6 +270,7 @@ def _band_macro(
         height=height,
         entities=tuple(entities),
         ports=tuple(ports),
+        reversible_lanes=reversible_lanes,
     )
 
 
@@ -206,6 +280,7 @@ def _dense_macro(
     n_out: int,
     belt: str,
     cap: float,
+    db: Database,
 ) -> tuple[MacroCell, str]:
     """Wrap a :class:`DensePlacement` as a placeable/routable macro.
 
@@ -220,19 +295,8 @@ def _dense_macro(
 
     product_port = next(p for p in placement.ports if p.direction == "output")
     in_ports = [p for p in placement.ports if p.direction == "input"]
-    for p in in_ports:
-        ports.append(
-            PortCandidate(
-                id=f"{p.item}-in",
-                item=p.item,
-                direction="input",
-                side="west",
-                local_position=p.local_position,
-                flow_entry_dir=p.flow_dir,
-                max_rate_per_sec=cap,
-            )
-        )
 
+    # Output fanout first: fixes the cell width the input lanes reverse against.
     width, height = placement.width, placement.height
     product = product_port.item
     out_col, out_row = product_port.local_position
@@ -254,6 +318,17 @@ def _dense_macro(
             )
         )
 
+    reversible_lanes: dict[str, ReversibleLane] = {}
+    for p in in_ports:
+        row = p.local_position[1]
+        port, lane = _input_lane_port(
+            entities, belt, p.item, row, placement.width, width, cap, db,
+            port_id=f"{p.item}-in",
+        )
+        ports.append(port)
+        if lane is not None:
+            reversible_lanes[port.id] = lane
+
     return (
         MacroCell(
             id=macro_id,
@@ -262,6 +337,7 @@ def _dense_macro(
             height=height,
             entities=tuple(entities),
             ports=tuple(ports),
+            reversible_lanes=reversible_lanes,
         ),
         product,
     )
@@ -448,7 +524,7 @@ def build_problem(
             inserter=inserter, long_inserter=long_inserter, belt=belt,
         )
         macro, _ = _dense_macro(
-            uid, placement, len(chains.get(product, [])), belt, cap,
+            uid, placement, len(chains.get(product, [])), belt, cap, db,
         )
         problem.macros[uid] = macro
         producer_of[product] = uid

@@ -1,0 +1,212 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="912" height="924" viewBox="-12 -12 912 924" font-family="monospace">
+<rect x="0" y="0" width="888" height="900" fill="#fafafa" stroke="#444"/>
+<line x1="0" y1="0" x2="0" y2="900" stroke="#ddd" stroke-width="1"/>
+<line x1="48" y1="0" x2="48" y2="900" stroke="#ddd" stroke-width="1"/>
+<line x1="96" y1="0" x2="96" y2="900" stroke="#ddd" stroke-width="1"/>
+<line x1="144" y1="0" x2="144" y2="900" stroke="#ddd" stroke-width="1"/>
+<line x1="192" y1="0" x2="192" y2="900" stroke="#ddd" stroke-width="1"/>
+<line x1="240" y1="0" x2="240" y2="900" stroke="#ddd" stroke-width="1"/>
+<line x1="288" y1="0" x2="288" y2="900" stroke="#ddd" stroke-width="1"/>
+<line x1="336" y1="0" x2="336" y2="900" stroke="#ddd" stroke-width="1"/>
+<line x1="384" y1="0" x2="384" y2="900" stroke="#ddd" stroke-width="1"/>
+<line x1="432" y1="0" x2="432" y2="900" stroke="#ddd" stroke-width="1"/>
+<line x1="480" y1="0" x2="480" y2="900" stroke="#ddd" stroke-width="1"/>
+<line x1="528" y1="0" x2="528" y2="900" stroke="#ddd" stroke-width="1"/>
+<line x1="576" y1="0" x2="576" y2="900" stroke="#ddd" stroke-width="1"/>
+<line x1="624" y1="0" x2="624" y2="900" stroke="#ddd" stroke-width="1"/>
+<line x1="672" y1="0" x2="672" y2="900" stroke="#ddd" stroke-width="1"/>
+<line x1="720" y1="0" x2="720" y2="900" stroke="#ddd" stroke-width="1"/>
+<line x1="768" y1="0" x2="768" y2="900" stroke="#ddd" stroke-width="1"/>
+<line x1="816" y1="0" x2="816" y2="900" stroke="#ddd" stroke-width="1"/>
+<line x1="864" y1="0" x2="864" y2="900" stroke="#ddd" stroke-width="1"/>
+<line x1="912" y1="0" x2="912" y2="900" stroke="#ddd" stroke-width="1"/>
+<line x1="0" y1="0" x2="888" y2="0" stroke="#ddd" stroke-width="1"/>
+<line x1="0" y1="48" x2="888" y2="48" stroke="#ddd" stroke-width="1"/>
+<line x1="0" y1="96" x2="888" y2="96" stroke="#ddd" stroke-width="1"/>
+<line x1="0" y1="144" x2="888" y2="144" stroke="#ddd" stroke-width="1"/>
+<line x1="0" y1="192" x2="888" y2="192" stroke="#ddd" stroke-width="1"/>
+<line x1="0" y1="240" x2="888" y2="240" stroke="#ddd" stroke-width="1"/>
+<line x1="0" y1="288" x2="888" y2="288" stroke="#ddd" stroke-width="1"/>
+<line x1="0" y1="336" x2="888" y2="336" stroke="#ddd" stroke-width="1"/>
+<line x1="0" y1="384" x2="888" y2="384" stroke="#ddd" stroke-width="1"/>
+<line x1="0" y1="432" x2="888" y2="432" stroke="#ddd" stroke-width="1"/>
+<line x1="0" y1="480" x2="888" y2="480" stroke="#ddd" stroke-width="1"/>
+<line x1="0" y1="528" x2="888" y2="528" stroke="#ddd" stroke-width="1"/>
+<line x1="0" y1="576" x2="888" y2="576" stroke="#ddd" stroke-width="1"/>
+<line x1="0" y1="624" x2="888" y2="624" stroke="#ddd" stroke-width="1"/>
+<line x1="0" y1="672" x2="888" y2="672" stroke="#ddd" stroke-width="1"/>
+<line x1="0" y1="720" x2="888" y2="720" stroke="#ddd" stroke-width="1"/>
+<line x1="0" y1="768" x2="888" y2="768" stroke="#ddd" stroke-width="1"/>
+<line x1="0" y1="816" x2="888" y2="816" stroke="#ddd" stroke-width="1"/>
+<line x1="0" y1="864" x2="888" y2="864" stroke="#ddd" stroke-width="1"/>
+<line x1="0" y1="912" x2="888" y2="912" stroke="#ddd" stroke-width="1"/>
+<line x1="24.0" y1="120.0" x2="72.0" y2="120.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
+<line x1="24.0" y1="216.0" x2="72.0" y2="216.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
+<line x1="24.0" y1="216.0" x2="24.0" y2="264.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
+<line x1="24.0" y1="504.0" x2="24.0" y2="552.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
+<line x1="24.0" y1="552.0" x2="24.0" y2="600.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
+<line x1="24.0" y1="600.0" x2="72.0" y2="600.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
+<line x1="24.0" y1="648.0" x2="72.0" y2="648.0" stroke="#8abf8a" stroke-width="3.0" opacity="0.7"/>
+<line x1="24.0" y1="648.0" x2="24.0" y2="696.0" stroke="#8abf8a" stroke-width="3.0" opacity="0.7"/>
+<line x1="24.0" y1="696.0" x2="24.0" y2="744.0" stroke="#8abf8a" stroke-width="3.0" opacity="0.7"/>
+<line x1="24.0" y1="744.0" x2="24.0" y2="792.0" stroke="#8abf8a" stroke-width="3.0" opacity="0.7"/>
+<line x1="24.0" y1="792.0" x2="24.0" y2="840.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
+<line x1="24.0" y1="840.0" x2="72.0" y2="840.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
+<line x1="24.0" y1="888.0" x2="72.0" y2="888.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
+<line x1="72.0" y1="120.0" x2="120.0" y2="120.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
+<line x1="72.0" y1="216.0" x2="120.0" y2="216.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
+<line x1="72.0" y1="600.0" x2="120.0" y2="600.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
+<line x1="72.0" y1="648.0" x2="120.0" y2="648.0" stroke="#8abf8a" stroke-width="3.0" opacity="0.7"/>
+<line x1="72.0" y1="792.0" x2="120.0" y2="792.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
+<line x1="72.0" y1="792.0" x2="72.0" y2="840.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
+<line x1="72.0" y1="840.0" x2="120.0" y2="840.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
+<line x1="72.0" y1="840.0" x2="72.0" y2="888.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
+<line x1="120.0" y1="72.0" x2="168.0" y2="72.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
+<line x1="120.0" y1="72.0" x2="120.0" y2="120.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
+<line x1="120.0" y1="120.0" x2="168.0" y2="120.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
+<line x1="120.0" y1="120.0" x2="120.0" y2="168.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
+<line x1="120.0" y1="168.0" x2="120.0" y2="216.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
+<line x1="120.0" y1="600.0" x2="168.0" y2="600.0" stroke="#8abf8a" stroke-width="3.0" opacity="0.7"/>
+<line x1="120.0" y1="600.0" x2="120.0" y2="648.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
+<line x1="120.0" y1="792.0" x2="120.0" y2="840.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
+<line x1="120.0" y1="840.0" x2="168.0" y2="840.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
+<line x1="120.0" y1="840.0" x2="120.0" y2="888.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
+<line x1="120.0" y1="888.0" x2="168.0" y2="888.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
+<line x1="168.0" y1="72.0" x2="216.0" y2="72.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
+<line x1="168.0" y1="600.0" x2="168.0" y2="648.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
+<line x1="168.0" y1="648.0" x2="216.0" y2="648.0" stroke="#8abf8a" stroke-width="3.0" opacity="0.7"/>
+<line x1="168.0" y1="840.0" x2="216.0" y2="840.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
+<line x1="168.0" y1="888.0" x2="216.0" y2="888.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
+<line x1="216.0" y1="72.0" x2="264.0" y2="72.0" stroke="#8abf8a" stroke-width="3.0" opacity="0.7"/>
+<line x1="216.0" y1="72.0" x2="216.0" y2="120.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
+<line x1="216.0" y1="648.0" x2="264.0" y2="648.0" stroke="#8abf8a" stroke-width="3.0" opacity="0.7"/>
+<line x1="216.0" y1="840.0" x2="264.0" y2="840.0" stroke="#8abf8a" stroke-width="3.0" opacity="0.7"/>
+<line x1="216.0" y1="888.0" x2="264.0" y2="888.0" stroke="#8abf8a" stroke-width="3.0" opacity="0.7"/>
+<line x1="264.0" y1="72.0" x2="264.0" y2="120.0" stroke="#8abf8a" stroke-width="3.0" opacity="0.7"/>
+<line x1="264.0" y1="120.0" x2="264.0" y2="168.0" stroke="#ff9900" stroke-width="3.7" opacity="0.7"/>
+<line x1="264.0" y1="168.0" x2="312.0" y2="168.0" stroke="#8abf8a" stroke-width="3.0" opacity="0.7"/>
+<line x1="264.0" y1="168.0" x2="264.0" y2="216.0" stroke="#ff9900" stroke-width="3.7" opacity="0.7"/>
+<line x1="264.0" y1="216.0" x2="264.0" y2="264.0" stroke="#ff9900" stroke-width="3.7" opacity="0.7"/>
+<line x1="264.0" y1="264.0" x2="312.0" y2="264.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
+<line x1="264.0" y1="264.0" x2="264.0" y2="312.0" stroke="#8abf8a" stroke-width="2.3" opacity="0.7"/>
+<line x1="264.0" y1="312.0" x2="264.0" y2="360.0" stroke="#8abf8a" stroke-width="2.3" opacity="0.7"/>
+<line x1="264.0" y1="360.0" x2="312.0" y2="360.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
+<line x1="264.0" y1="504.0" x2="312.0" y2="504.0" stroke="#8abf8a" stroke-width="3.0" opacity="0.7"/>
+<line x1="264.0" y1="504.0" x2="264.0" y2="552.0" stroke="#ff9900" stroke-width="3.7" opacity="0.7"/>
+<line x1="264.0" y1="552.0" x2="264.0" y2="600.0" stroke="#ff9900" stroke-width="3.7" opacity="0.7"/>
+<line x1="264.0" y1="600.0" x2="264.0" y2="648.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
+<line x1="264.0" y1="840.0" x2="312.0" y2="840.0" stroke="#8abf8a" stroke-width="3.0" opacity="0.7"/>
+<line x1="264.0" y1="840.0" x2="264.0" y2="888.0" stroke="#8abf8a" stroke-width="3.0" opacity="0.7"/>
+<line x1="264.0" y1="888.0" x2="312.0" y2="888.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
+<line x1="312.0" y1="360.0" x2="360.0" y2="360.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
+<line x1="312.0" y1="504.0" x2="360.0" y2="504.0" stroke="#8abf8a" stroke-width="3.0" opacity="0.7"/>
+<line x1="312.0" y1="840.0" x2="360.0" y2="840.0" stroke="#8abf8a" stroke-width="3.0" opacity="0.7"/>
+<line x1="312.0" y1="888.0" x2="360.0" y2="888.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
+<line x1="360.0" y1="360.0" x2="408.0" y2="360.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
+<line x1="360.0" y1="504.0" x2="408.0" y2="504.0" stroke="#8abf8a" stroke-width="3.0" opacity="0.7"/>
+<line x1="360.0" y1="840.0" x2="408.0" y2="840.0" stroke="#8abf8a" stroke-width="3.0" opacity="0.7"/>
+<line x1="360.0" y1="888.0" x2="408.0" y2="888.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
+<line x1="408.0" y1="360.0" x2="456.0" y2="360.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
+<line x1="408.0" y1="504.0" x2="456.0" y2="504.0" stroke="#ff9900" stroke-width="3.7" opacity="0.7"/>
+<line x1="408.0" y1="600.0" x2="408.0" y2="648.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
+<line x1="408.0" y1="648.0" x2="456.0" y2="648.0" stroke="#8abf8a" stroke-width="3.0" opacity="0.7"/>
+<line x1="408.0" y1="792.0" x2="456.0" y2="792.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
+<line x1="408.0" y1="792.0" x2="408.0" y2="840.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
+<line x1="408.0" y1="840.0" x2="456.0" y2="840.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
+<line x1="408.0" y1="888.0" x2="456.0" y2="888.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
+<line x1="456.0" y1="360.0" x2="456.0" y2="408.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
+<line x1="456.0" y1="408.0" x2="504.0" y2="408.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
+<line x1="456.0" y1="504.0" x2="504.0" y2="504.0" stroke="#ff9900" stroke-width="4.0" opacity="0.7"/>
+<line x1="456.0" y1="600.0" x2="456.0" y2="648.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
+<line x1="456.0" y1="648.0" x2="504.0" y2="648.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
+<line x1="456.0" y1="648.0" x2="456.0" y2="696.0" stroke="#8abf8a" stroke-width="3.0" opacity="0.7"/>
+<line x1="456.0" y1="696.0" x2="456.0" y2="744.0" stroke="#8abf8a" stroke-width="3.0" opacity="0.7"/>
+<line x1="456.0" y1="744.0" x2="504.0" y2="744.0" stroke="#8abf8a" stroke-width="3.0" opacity="0.7"/>
+<line x1="456.0" y1="744.0" x2="456.0" y2="792.0" stroke="#8abf8a" stroke-width="3.0" opacity="0.7"/>
+<line x1="456.0" y1="792.0" x2="504.0" y2="792.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
+<line x1="456.0" y1="792.0" x2="456.0" y2="840.0" stroke="#8abf8a" stroke-width="3.0" opacity="0.7"/>
+<line x1="456.0" y1="840.0" x2="504.0" y2="840.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
+<line x1="456.0" y1="840.0" x2="456.0" y2="888.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
+<line x1="504.0" y1="408.0" x2="504.0" y2="456.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
+<line x1="504.0" y1="456.0" x2="504.0" y2="504.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
+<line x1="504.0" y1="504.0" x2="552.0" y2="504.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
+<line x1="504.0" y1="504.0" x2="504.0" y2="552.0" stroke="#ff9900" stroke-width="4.0" opacity="0.7"/>
+<line x1="504.0" y1="552.0" x2="504.0" y2="600.0" stroke="#ff9900" stroke-width="4.0" opacity="0.7"/>
+<line x1="504.0" y1="600.0" x2="504.0" y2="648.0" stroke="#ff9900" stroke-width="4.0" opacity="0.7"/>
+<line x1="504.0" y1="648.0" x2="504.0" y2="696.0" stroke="#ff9900" stroke-width="4.0" opacity="0.7"/>
+<line x1="504.0" y1="696.0" x2="552.0" y2="696.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
+<line x1="504.0" y1="696.0" x2="504.0" y2="744.0" stroke="#8abf8a" stroke-width="3.0" opacity="0.7"/>
+<line x1="552.0" y1="504.0" x2="600.0" y2="504.0" stroke="#8abf8a" stroke-width="3.0" opacity="0.7"/>
+<line x1="840.0" y1="264.0" x2="888.0" y2="264.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
+<line x1="888.0" y1="120.0" x2="888.0" y2="168.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
+<line x1="888.0" y1="168.0" x2="888.0" y2="216.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
+<line x1="888.0" y1="216.0" x2="888.0" y2="264.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
+<rect x="24" y="648" width="432" height="108" fill="#cfe3f7" stroke="#333" opacity="0.9"/>
+<text x="27.599999999999998" y="660" font-size="10">advanced-circuit</text>
+<circle cx="450.0" cy="738.0" r="4" fill="#d62728"><title>advanced-circuit.advanced-circuit-out-0</title></circle>
+<circle cx="450.0" cy="666.0" r="4" fill="#1f77b4"><title>advanced-circuit.copper-cable-in</title></circle>
+<circle cx="450.0" cy="654.0" r="4" fill="#1f77b4"><title>advanced-circuit.electronic-circuit-in</title></circle>
+<circle cx="30.0" cy="750.0" r="4" fill="#1f77b4"><title>advanced-circuit.plastic-bar-in</title></circle>
+<rect x="288" y="156" width="576" height="108" fill="#cfe3f7" stroke="#333" opacity="0.9"/>
+<text x="291.6" y="168" font-size="10">chemical-science-pack</text>
+<circle cx="858.0" cy="246.0" r="4" fill="#d62728"><title>chemical-science-pack.chemical-science-pack-out-0</title></circle>
+<circle cx="294.0" cy="174.0" r="4" fill="#1f77b4"><title>chemical-science-pack.advanced-circuit-in</title></circle>
+<circle cx="294.0" cy="162.0" r="4" fill="#1f77b4"><title>chemical-science-pack.engine-unit-in</title></circle>
+<circle cx="294.0" cy="258.0" r="4" fill="#1f77b4"><title>chemical-science-pack.sulfur-in</title></circle>
+<rect x="528" y="504" width="84" height="180" fill="#cfe3f7" stroke="#333" opacity="0.9"/>
+<text x="531.5999999999999" y="516" font-size="10">copper-cable</text>
+<circle cx="534.0" cy="678.0" r="4" fill="#d62728"><title>copper-cable.copper-cable-out-0</title></circle>
+<circle cx="606.0" cy="510.0" r="4" fill="#1f77b4"><title>copper-cable.copper-plate-in</title></circle>
+<rect x="396" y="516" width="72" height="96" fill="#cfe3f7" stroke="#333" opacity="0.9"/>
+<text x="399.59999999999997" y="528" font-size="10">electronic-circuit</text>
+<circle cx="462.0" cy="594.0" r="4" fill="#d62728"><title>electronic-circuit.electronic-circuit-out-0</title></circle>
+<circle cx="462.0" cy="522.0" r="4" fill="#1f77b4"><title>electronic-circuit.copper-cable-in</title></circle>
+<circle cx="402.0" cy="606.0" r="4" fill="#1f77b4"><title>electronic-circuit.iron-plate-in</title></circle>
+<rect x="144" y="108" width="108" height="504" fill="#cfe3f7" stroke="#333" opacity="0.9"/>
+<text x="147.60000000000002" y="120" font-size="10">engine-unit</text>
+<circle cx="234.0" cy="114.0" r="4" fill="#d62728"><title>engine-unit.engine-unit-out-0</title></circle>
+<circle cx="162.0" cy="606.0" r="4" fill="#1f77b4"><title>engine-unit.pipe-in</title></circle>
+<circle cx="150.0" cy="114.0" r="4" fill="#1f77b4"><title>engine-unit.steel-plate-in</title></circle>
+<circle cx="246.0" cy="606.0" r="4" fill="#1f77b4"><title>engine-unit.iron-gear-wheel-in</title></circle>
+<rect x="204" y="816" width="36" height="84" fill="#cfe3f7" stroke="#333" opacity="0.9"/>
+<text x="207.60000000000002" y="828" font-size="10">iron-gear-wheel</text>
+<circle cx="234.0" cy="894.0" r="4" fill="#d62728"><title>iron-gear-wheel.iron-gear-wheel-out-0</title></circle>
+<circle cx="210.0" cy="822.0" r="4" fill="#1f77b4"><title>iron-gear-wheel.iron-plate-in</title></circle>
+<rect x="492" y="768" width="72" height="84" fill="#cfe3f7" stroke="#333" opacity="0.9"/>
+<text x="495.59999999999997" y="780" font-size="10">pipe</text>
+<circle cx="498.0" cy="774.0" r="4" fill="#d62728"><title>pipe.pipe-out-0</title></circle>
+<circle cx="498.0" cy="846.0" r="4" fill="#1f77b4"><title>pipe.iron-plate-in</title></circle>
+<rect x="0" y="504" width="24" height="12" fill="#d9f2d9" stroke="#333" opacity="0.9"/>
+<text x="3.5999999999999996" y="516" font-size="10">in-copper-plate</text>
+<circle cx="18.0" cy="510.0" r="4" fill="#d62728"><title>in-copper-plate.copper-plate-out-0</title></circle>
+<rect x="0" y="864" width="24" height="12" fill="#d9f2d9" stroke="#333" opacity="0.9"/>
+<text x="3.5999999999999996" y="876" font-size="10">in-iron-plate</text>
+<circle cx="18.0" cy="870.0" r="4" fill="#d62728"><title>in-iron-plate.iron-plate-out-0</title></circle>
+<rect x="0" y="792" width="24" height="12" fill="#d9f2d9" stroke="#333" opacity="0.9"/>
+<text x="3.5999999999999996" y="804" font-size="10">in-plastic-bar</text>
+<circle cx="18.0" cy="798.0" r="4" fill="#d62728"><title>in-plastic-bar.plastic-bar-out-0</title></circle>
+<rect x="0" y="108" width="24" height="12" fill="#d9f2d9" stroke="#333" opacity="0.9"/>
+<text x="3.5999999999999996" y="120" font-size="10">in-steel-plate</text>
+<circle cx="18.0" cy="114.0" r="4" fill="#d62728"><title>in-steel-plate.steel-plate-out-0</title></circle>
+<rect x="0" y="252" width="24" height="12" fill="#d9f2d9" stroke="#333" opacity="0.9"/>
+<text x="3.5999999999999996" y="264" font-size="10">in-sulfur</text>
+<circle cx="18.0" cy="258.0" r="4" fill="#d62728"><title>in-sulfur.sulfur-out-0</title></circle>
+<rect x="864" y="108" width="24" height="12" fill="#f7ddc7" stroke="#333" opacity="0.9"/>
+<text x="867.5999999999999" y="120" font-size="10">out</text>
+<circle cx="870.0" cy="114.0" r="4" fill="#1f77b4"><title>out.chemical-science-pack-in</title></circle>
+<polyline points="462.0,738.0 462.0,750.0 474.0,750.0 486.0,750.0 498.0,750.0 498.0,738.0 498.0,726.0 498.0,714.0 498.0,702.0 510.0,702.0 522.0,702.0 534.0,702.0 546.0,702.0 546.0,690.0 558.0,690.0 570.0,690.0 582.0,690.0 594.0,690.0 606.0,690.0 618.0,690.0 630.0,690.0 630.0,678.0 630.0,666.0 630.0,654.0 630.0,642.0 630.0,630.0 630.0,618.0 630.0,606.0 630.0,594.0 630.0,582.0 630.0,570.0 630.0,558.0 630.0,546.0 630.0,534.0 630.0,522.0 630.0,510.0 630.0,498.0 630.0,486.0 630.0,474.0 630.0,462.0 630.0,450.0 630.0,438.0 630.0,426.0 618.0,426.0 606.0,426.0 594.0,426.0 582.0,426.0 570.0,426.0 558.0,426.0 546.0,426.0 534.0,426.0 522.0,426.0 510.0,426.0 498.0,426.0 486.0,426.0 474.0,426.0 462.0,426.0 450.0,426.0 438.0,426.0 438.0,414.0 438.0,402.0 438.0,390.0 438.0,378.0 438.0,366.0 438.0,354.0 438.0,342.0 426.0,342.0 414.0,342.0 402.0,342.0 390.0,342.0 378.0,342.0 366.0,342.0 354.0,342.0 342.0,342.0 330.0,342.0 318.0,342.0 306.0,342.0 294.0,342.0 282.0,342.0 282.0,330.0 282.0,318.0 282.0,306.0 282.0,294.0 282.0,282.0 282.0,270.0 282.0,210.0 282.0,198.0 282.0,186.0 282.0,174.0" fill="none" stroke="#6a3d9a" stroke-width="2" opacity="0.8"><title>advanced-circuit:advanced-circuit-t0[0]</title></polyline>
+<polyline points="870.0,246.0 870.0,234.0 870.0,222.0 870.0,210.0 870.0,198.0 870.0,186.0 870.0,174.0 870.0,162.0 870.0,150.0 870.0,138.0 870.0,126.0 858.0,126.0 858.0,114.0" fill="none" stroke="#6a3d9a" stroke-width="2" opacity="0.8"><title>chemical-science-pack:chemical-science-pack-t0[0]</title></polyline>
+<polyline points="534.0,690.0 522.0,690.0 522.0,678.0 522.0,666.0 522.0,654.0 522.0,642.0 522.0,630.0 522.0,618.0 522.0,606.0 522.0,594.0 522.0,582.0 522.0,570.0 522.0,558.0 510.0,558.0 498.0,558.0 486.0,558.0 486.0,546.0 486.0,534.0 486.0,522.0 474.0,522.0" fill="none" stroke="#6a3d9a" stroke-width="2" opacity="0.8"><title>copper-cable:copper-cable-t0[0]</title></polyline>
+<polyline points="498.0,570.0 486.0,570.0 486.0,582.0 486.0,594.0 486.0,606.0 498.0,606.0 498.0,618.0 498.0,630.0 498.0,642.0 498.0,654.0 498.0,666.0 486.0,666.0 474.0,666.0 462.0,666.0" fill="none" stroke="#6a3d9a" stroke-width="2" opacity="0.8"><title>copper-cable:copper-cable-t0[1]</title></polyline>
+<polyline points="30.0,510.0 30.0,522.0 30.0,534.0 30.0,546.0 30.0,558.0 30.0,570.0 30.0,582.0 30.0,594.0 30.0,606.0 30.0,618.0 42.0,618.0 54.0,618.0 66.0,618.0 78.0,618.0 90.0,618.0 102.0,618.0 114.0,618.0 126.0,618.0 138.0,618.0 150.0,618.0 210.0,618.0 222.0,618.0 234.0,618.0 234.0,630.0 246.0,630.0 258.0,630.0 270.0,630.0 282.0,630.0 282.0,618.0 282.0,606.0 282.0,594.0 282.0,582.0 282.0,570.0 282.0,558.0 282.0,546.0 282.0,534.0 282.0,522.0 282.0,510.0 282.0,498.0 282.0,486.0 294.0,486.0 306.0,486.0 318.0,486.0 330.0,486.0 342.0,486.0 354.0,486.0 366.0,486.0 378.0,486.0 390.0,486.0 402.0,486.0 414.0,486.0 426.0,486.0 438.0,486.0 450.0,486.0 462.0,486.0 474.0,486.0 486.0,486.0 498.0,486.0 510.0,486.0 522.0,486.0 534.0,486.0 546.0,486.0 558.0,486.0 570.0,486.0 582.0,486.0 594.0,486.0 606.0,486.0 606.0,498.0" fill="none" stroke="#6a3d9a" stroke-width="2" opacity="0.8"><title>copper-plate:in-copper-plate-t0[0]</title></polyline>
+<polyline points="474.0,594.0 474.0,606.0 474.0,618.0 474.0,630.0 474.0,642.0 474.0,654.0 462.0,654.0" fill="none" stroke="#6a3d9a" stroke-width="2" opacity="0.8"><title>electronic-circuit:electronic-circuit-t0[0]</title></polyline>
+<polyline points="234.0,102.0 234.0,90.0 234.0,78.0 234.0,66.0 246.0,66.0 258.0,66.0 270.0,66.0 282.0,66.0 282.0,78.0 282.0,90.0 282.0,102.0 282.0,114.0 282.0,126.0 282.0,138.0 282.0,150.0 282.0,162.0" fill="none" stroke="#6a3d9a" stroke-width="2" opacity="0.8"><title>engine-unit:engine-unit-t0[0]</title></polyline>
+<polyline points="246.0,894.0 246.0,882.0 258.0,882.0 270.0,882.0 282.0,882.0 294.0,882.0 306.0,882.0 318.0,882.0 330.0,882.0 342.0,882.0 354.0,882.0 366.0,882.0 378.0,882.0 390.0,882.0 402.0,882.0 414.0,882.0 426.0,882.0 438.0,882.0 450.0,882.0 462.0,882.0 474.0,882.0 486.0,882.0 498.0,882.0 510.0,882.0 522.0,882.0 534.0,882.0 546.0,882.0 558.0,882.0 570.0,882.0 582.0,882.0 594.0,882.0 606.0,882.0 618.0,882.0 618.0,870.0 618.0,858.0 618.0,846.0 618.0,834.0 618.0,822.0 618.0,810.0 618.0,798.0 618.0,786.0 618.0,774.0 618.0,762.0 618.0,750.0 618.0,738.0 618.0,726.0 618.0,666.0 618.0,654.0 618.0,642.0 618.0,630.0 618.0,618.0 618.0,606.0 618.0,594.0 618.0,582.0 618.0,570.0 618.0,558.0 618.0,546.0 618.0,534.0 618.0,522.0 618.0,510.0 618.0,498.0 618.0,486.0 618.0,474.0 606.0,474.0 594.0,474.0 582.0,474.0 570.0,474.0 558.0,474.0 546.0,474.0 534.0,474.0 522.0,474.0 510.0,474.0 498.0,474.0 486.0,474.0 474.0,474.0 462.0,474.0 450.0,474.0 438.0,474.0 426.0,474.0 414.0,474.0 402.0,474.0 390.0,474.0 378.0,474.0 366.0,474.0 354.0,474.0 342.0,474.0 330.0,474.0 318.0,474.0 306.0,474.0 294.0,474.0 282.0,474.0 270.0,474.0 270.0,486.0 270.0,498.0 270.0,510.0 270.0,522.0 270.0,534.0 270.0,546.0 270.0,558.0 270.0,570.0 270.0,582.0 270.0,594.0 270.0,606.0 270.0,618.0 258.0,618.0 246.0,618.0" fill="none" stroke="#6a3d9a" stroke-width="2" opacity="0.8"><title>iron-gear-wheel:iron-gear-wheel-t0[0]</title></polyline>
+<polyline points="30.0,870.0 42.0,870.0 54.0,870.0 66.0,870.0 78.0,870.0 90.0,870.0 102.0,870.0 114.0,870.0 126.0,870.0 138.0,870.0 150.0,870.0 162.0,870.0 174.0,870.0 186.0,870.0 198.0,870.0 258.0,870.0 270.0,870.0 282.0,870.0 294.0,870.0 306.0,870.0 318.0,870.0 330.0,870.0 342.0,870.0 354.0,870.0 366.0,870.0 378.0,870.0 390.0,870.0 402.0,870.0 414.0,870.0 426.0,870.0 438.0,870.0 450.0,870.0 462.0,870.0 462.0,858.0 462.0,846.0 462.0,834.0 462.0,822.0 462.0,810.0 462.0,798.0 462.0,786.0 462.0,774.0 462.0,714.0 462.0,702.0 462.0,642.0 462.0,630.0 450.0,630.0 438.0,630.0 426.0,630.0 414.0,630.0 402.0,630.0 390.0,630.0 390.0,618.0 390.0,606.0" fill="none" stroke="#6a3d9a" stroke-width="2" opacity="0.8"><title>iron-plate:in-iron-plate-t0[0]</title></polyline>
+<polyline points="186.0,858.0 198.0,858.0 198.0,846.0 198.0,834.0 198.0,822.0" fill="none" stroke="#6a3d9a" stroke-width="2" opacity="0.8"><title>iron-plate:in-iron-plate-t0[1]</title></polyline>
+<polyline points="474.0,858.0 474.0,846.0 486.0,846.0" fill="none" stroke="#6a3d9a" stroke-width="2" opacity="0.8"><title>iron-plate:in-iron-plate-t0[2]</title></polyline>
+<polyline points="486.0,774.0 474.0,774.0 474.0,762.0 462.0,762.0 450.0,762.0 450.0,774.0 450.0,786.0 450.0,798.0 450.0,810.0 450.0,822.0 438.0,822.0 426.0,822.0 414.0,822.0 402.0,822.0 390.0,822.0 378.0,822.0 366.0,822.0 354.0,822.0 342.0,822.0 330.0,822.0 318.0,822.0 306.0,822.0 294.0,822.0 282.0,822.0 270.0,822.0 258.0,822.0 246.0,822.0 246.0,810.0 234.0,810.0 222.0,810.0 210.0,810.0 198.0,810.0 186.0,810.0 186.0,822.0 174.0,822.0 162.0,822.0 150.0,822.0 138.0,822.0 126.0,822.0 114.0,822.0 102.0,822.0 90.0,822.0 78.0,822.0 66.0,822.0 54.0,822.0 42.0,822.0 30.0,822.0 18.0,822.0 6.0,822.0 6.0,810.0 6.0,750.0 6.0,738.0 6.0,726.0 6.0,714.0 6.0,702.0 6.0,690.0 6.0,678.0 6.0,666.0 6.0,654.0 6.0,642.0 6.0,630.0 18.0,630.0 30.0,630.0 42.0,630.0 54.0,630.0 66.0,630.0 78.0,630.0 90.0,630.0 102.0,630.0 114.0,630.0 126.0,630.0 138.0,630.0 150.0,630.0 162.0,630.0 162.0,618.0" fill="none" stroke="#6a3d9a" stroke-width="2" opacity="0.8"><title>pipe:pipe-t0[0]</title></polyline>
+<polyline points="30.0,798.0 30.0,786.0 30.0,774.0 30.0,762.0 18.0,762.0 18.0,750.0" fill="none" stroke="#6a3d9a" stroke-width="2" opacity="0.8"><title>plastic-bar:in-plastic-bar-t0[0]</title></polyline>
+<polyline points="30.0,114.0 30.0,102.0 42.0,102.0 54.0,102.0 66.0,102.0 78.0,102.0 90.0,102.0 102.0,102.0 114.0,102.0 126.0,102.0 138.0,102.0 150.0,102.0" fill="none" stroke="#6a3d9a" stroke-width="2" opacity="0.8"><title>steel-plate:in-steel-plate-t0[0]</title></polyline>
+<polyline points="30.0,258.0 30.0,246.0 30.0,234.0 30.0,222.0 30.0,210.0 30.0,198.0 18.0,198.0 18.0,186.0 18.0,174.0 18.0,162.0 18.0,102.0 18.0,90.0 30.0,90.0 42.0,90.0 54.0,90.0 66.0,90.0 78.0,90.0 90.0,90.0 102.0,90.0 114.0,90.0 126.0,90.0 138.0,90.0 150.0,90.0 162.0,90.0 174.0,90.0 186.0,90.0 198.0,90.0 210.0,90.0 210.0,102.0 222.0,102.0 246.0,102.0 258.0,102.0 258.0,114.0 258.0,126.0 258.0,138.0 258.0,150.0 258.0,162.0 258.0,174.0 258.0,186.0 258.0,198.0 258.0,210.0 258.0,222.0 258.0,234.0 258.0,246.0 258.0,258.0 270.0,258.0 282.0,258.0" fill="none" stroke="#6a3d9a" stroke-width="2" opacity="0.8"><title>sulfur:in-sulfur-t0[0]</title></polyline>
+</svg>

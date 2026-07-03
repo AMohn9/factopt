@@ -78,32 +78,47 @@ class MasterVars:
     o_idx: dict[str, cp_model.IntVar] = field(default_factory=dict)
     w: dict[str, cp_model.IntVar] = field(default_factory=dict)
     h: dict[str, cp_model.IntVar] = field(default_factory=dict)
+    # Reversible input lanes: per (macro, port) a bool "use the reverse end",
+    # and its AND with each orientation bool (reversal is orthogonal to the
+    # quarter-turn, so the port tile depends on both).
+    rev: dict[tuple[str, str], cp_model.IntVar] = field(default_factory=dict)
+    rev_orient: dict[tuple[str, str, int], cp_model.IntVar] = field(default_factory=dict)
+
+    def _port_terms(self, macro_id: str, port_id: str, access: bool):
+        """Linear (x, y) expressions of a port's tile (``access=False``) or its
+        access tile (``access=True``), summed over the orientation choice and,
+        for reversible ports, the reverse-end choice."""
+        ob = self.orient[macro_id]
+        reversible = (macro_id, port_id) in self.rev
+        tx, ty = [], []
+        for k in range(4):
+            p = self.cells[macro_id][k].port(port_id)
+            prim = p.primary_end
+            bx, by = prim.local_position
+            if access:
+                dx, dy = _SIDE_VEC[prim.side]
+                bx, by = bx + dx, by + dy
+            tx.append(ob[k] * bx)
+            ty.append(ob[k] * by)
+            if reversible and p.reverse is not None:
+                aux = self.rev_orient[(macro_id, port_id, k)]
+                rx, ry = p.reverse.local_position
+                if access:
+                    dx, dy = _SIDE_VEC[p.reverse.side]
+                    rx, ry = rx + dx, ry + dy
+                tx.append(aux * (rx - bx))
+                ty.append(aux * (ry - by))
+        return self.x[macro_id] + sum(tx), self.y[macro_id] + sum(ty)
 
     def port_exprs(self, macro_id: str, port_id: str):
         """(x, y) linear expressions of a port's tile under the chosen
-        orientation."""
-        ob = self.orient[macro_id]
-        px = self.x[macro_id] + sum(
-            ob[k] * self.cells[macro_id][k].port(port_id).local_position[0]
-            for k in range(4)
-        )
-        py = self.y[macro_id] + sum(
-            ob[k] * self.cells[macro_id][k].port(port_id).local_position[1]
-            for k in range(4)
-        )
-        return px, py
+        orientation and reverse-end choice."""
+        return self._port_terms(macro_id, port_id, access=False)
 
     def port_access_exprs(self, macro_id: str, port_id: str):
         """(x, y) linear expressions of a port's access tile (just outside
-        the footprint) under the chosen orientation."""
-        ob = self.orient[macro_id]
-        terms_x, terms_y = [], []
-        for k in range(4):
-            p = self.cells[macro_id][k].port(port_id)
-            dx, dy = _SIDE_VEC[p.side]
-            terms_x.append(ob[k] * (p.local_position[0] + dx))
-            terms_y.append(ob[k] * (p.local_position[1] + dy))
-        return self.x[macro_id] + sum(terms_x), self.y[macro_id] + sum(terms_y)
+        the footprint) under the chosen orientation and reverse-end choice."""
+        return self._port_terms(macro_id, port_id, access=True)
 
 
 def default_bounds(problem: MacroProblem, margin: int) -> tuple[int, int]:
@@ -156,6 +171,21 @@ def _build_placement(
         model.add(hm == sum(ob[k] * cells[mid][k].height for k in range(4)))
         orient[mid], o_idx[mid], w[mid], h[mid] = ob, oi, wm, hm
 
+    # Reversible input lanes: a bool per (macro, port) picking the reverse end,
+    # plus its AND with each orientation bool (the port tile depends on both).
+    rev: dict[tuple[str, str], cp_model.IntVar] = {}
+    rev_orient: dict[tuple[str, str, int], cp_model.IntVar] = {}
+    for mid, m in macros.items():
+        for p in m.ports:
+            if not p.reversible:
+                continue
+            rp = model.new_bool_var(f"rev_{mid}_{p.id}")
+            rev[(mid, p.id)] = rp
+            for k in range(4):
+                aux = model.new_bool_var(f"revor_{mid}_{p.id}_{k}")
+                model.add_multiplication_equality(aux, [orient[mid][k], rp])
+                rev_orient[(mid, p.id, k)] = aux
+
     # No-overlap with a `margin`-tile separation: inflate each rectangle.
     xi, yi = [], []
     for mid in macros:
@@ -179,7 +209,13 @@ def _build_placement(
     for mid, m in macros.items():
         pinned = problem.pins.get(mid)
         for k in range(4):
-            sides = {p.side for p in cells[mid][k].ports}
+            # A reversible port may sit on either end, so reserve clearance
+            # for both realizations regardless of which the solver picks.
+            sides: set = set()
+            for p in cells[mid][k].ports:
+                sides.add(p.side)
+                if p.reverse is not None:
+                    sides.add(p.reverse.side)
             ck = cells[mid][k]
             if "west" in sides and pinned != "west":
                 model.add(x[mid] >= 2).only_enforce_if(orient[mid][k])
@@ -214,6 +250,8 @@ def _build_placement(
         o_idx=o_idx,
         w=w,
         h=h,
+        rev=rev,
+        rev_orient=rev_orient,
     )
 
 
@@ -340,11 +378,17 @@ def solve_master(
     placements = {}
     for mid in problem.macros:
         k = s2.value(v.o_idx[mid])
+        port_choice = {
+            pid: bool(s2.value(rp))
+            for (m, pid), rp in v.rev.items()
+            if m == mid
+        }
         placements[mid] = PlacedMacro(
             cell=v.cells[mid][k],
             x=s2.value(v.x[mid]),
             y=s2.value(v.y[mid]),
             orientation=k,
+            port_choice=port_choice,
         )
     sol = MasterSolution(
         status=st2,
