@@ -83,6 +83,9 @@ class _Sink:
     port: str
     goal: tuple[int, int]
     goal_dir: int
+    # (exit_access_tile, exit_dir) when the consumer lane can be run through,
+    # letting the trunk pass by this sink instead of splitting to it.
+    exit: tuple[tuple[int, int], int] | None = None
 
 
 @dataclass
@@ -164,7 +167,8 @@ def route_nets(
             dp = dst_pm.cell.port(fs.port)
             sinks.append(
                 _Sink(macro=fs.macro, port=fs.port, goal=dst_pm.port_access_tile(dp),
-                      goal_dir=dst_pm.port_flow_dir(dp))
+                      goal_dir=dst_pm.port_flow_dir(dp),
+                      exit=dst_pm.port_through_exit(dp))
             )
         record = _Net(net=net, start=start, start_dir=src_pm.port_flow_dir(sp), sinks=sinks)
 
@@ -275,6 +279,7 @@ def route_nets(
             turn_penalty=_TURN_PENALTY,
             tile_cost=tile_cost_fn(n, occupancy),
             ug_blocked=ug_blocked,
+            sink_exits=[s.exit for s in n.sinks],
         )
 
     def contested_nets() -> tuple[set[str], set[tuple[int, int]]]:
@@ -345,6 +350,7 @@ def route_nets(
             db,
             belt=belt,
             start_dir=n.start_dir,
+            sink_exits=[s.exit for s in n.sinks],
         )
         if ideal is None:
             continue  # genuinely walled in; classified below

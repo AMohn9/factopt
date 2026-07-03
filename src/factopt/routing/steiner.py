@@ -170,9 +170,12 @@ class _TreeState:
         self.splitter_at[T] = sp
         self.splitter_at[half] = sp
 
-    def replay(self, actions: list[tuple], sink_idx: int, arrive0: int | None, ug_name: str) -> None:
+    def replay(self, actions: list[tuple], sink_idx: int, arrive0: int | None, ug_name: str) -> list[object]:
+        """Materialize ``actions`` into the tree. Returns the tags of any sinks
+        served inline by a pass-through lane along the way (``"lane"`` actions)."""
         arrive = arrive0
         path: list[tuple[int, int]] = []
+        threaded: list[object] = []
         for act in actions:
             if act[0] == "belt":
                 _, t, od = act
@@ -184,12 +187,19 @@ class _TreeState:
                 self.place_ug(tin, tout, d, ug_name)
                 path.extend([tin, tout])
                 arrive = d
+            elif act[0] == "lane":  # run the belt through a consumer's lane
+                _, entry, belt_dir, _exit_tile, exit_dir, tag = act
+                self.place_belt(entry, belt_dir, arrive)
+                path.append(entry)
+                arrive = exit_dir
+                threaded.append(tag)
             else:  # ("split", trunk_tile, perp_offset, dir)
                 _, T, p, d = act
                 self.split(T, p, d)
                 path.append((T[0] + p[0], T[1] + p[1]))
                 arrive = d
         self.paths[sink_idx] = path
+        return threaded
 
     def freeze(self, n_sinks: int) -> BeltTree:
         return BeltTree(
@@ -215,6 +225,8 @@ def route_tree(
     tile_cost=None,
     ug_blocked: set | None = None,
     splitter_cost: float = 2.0,
+    sink_exits: list[tuple[tuple[int, int], int] | None] | None = None,
+    through_cost: float = 0.5,
 ) -> tuple[BeltTree | None, int | None]:
     """Route a belt tree from ``start`` to every ``(goal, goal_dir)`` sink.
 
@@ -234,6 +246,15 @@ def route_tree(
     to every branch. While one sink is being routed, the other sinks' goal
     tiles and all existing tree tiles are hard obstacles (a branch may only
     leave the tree through a splitter).
+
+    ``sink_exits[i]``, when given, is ``(exit_access_tile, exit_dir)`` for a
+    sink whose consumer lane can be run *through*: the belt reaching that sink
+    may continue out the far side toward later sinks, so the consumer is served
+    inline (it picks off the passing belt) with no splitter. A sink served this
+    way costs ``through_cost`` instead of ``splitter_cost`` -- the router thus
+    strings roughly-colinear consumers onto one pass-by run and only branches
+    with a splitter where geometry actually diverges. Sinks with no exit (or
+    when ``sink_exits`` is ``None``) route exactly as before (splitter tree).
     """
     if belt not in db.belts:
         raise ValueError(f"unknown belt {belt!r}")
@@ -290,6 +311,22 @@ def route_tree(
             ugb = set(ug_blocked) if ug_blocked is not None else set()
             ugb |= ug_span_tiles(state.ug_spans)
 
+            # Pass-through lanes for the other pending sinks: the search may run
+            # the belt through them (serving them inline) instead of branching.
+            lane_edges: dict[tuple[int, int], tuple[int, tuple[int, int], int, int]] = {}
+            if sink_exits is not None:
+                for j in remaining:
+                    if j == i or sink_exits[j] is None:
+                        continue
+                    entry, gdir = sinks[j]
+                    exit_tile, exit_dir = sink_exits[j]
+                    lane_edges[entry] = (
+                        gdir if gdir is not None else exit_dir,
+                        exit_tile,
+                        exit_dir,
+                        j,
+                    )
+
             seeds: list[tuple[tuple[int, int, int], float, tuple]] = []
             if first_branch:
                 for od, (dx, dy) in _DIR_VEC.items():
@@ -331,13 +368,18 @@ def route_tree(
                 underground_penalty=underground_penalty,
                 tile_cost=tile_cost,
                 ug_blocked=ugb,
+                lane_edges=lane_edges,
+                through_cost=through_cost,
             )
             if actions is None:
                 return None, i
-            state.replay(
+            threaded = state.replay(
                 actions, i, arrive0=start_dir if first_branch else None, ug_name=ug_entity
             )
             remaining.remove(i)
+            for j in threaded:  # consumers served inline by a pass-through lane
+                if j in remaining:
+                    remaining.remove(j)
 
         return state.freeze(len(sinks)), None
 

@@ -31,7 +31,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Literal
 
-from factopt.model.blueprint import Entity, Position
+from factopt.model.blueprint import EAST, NORTH, SOUTH, WEST, Entity, Position
 
 Side = Literal["north", "south", "east", "west"]
 
@@ -40,6 +40,14 @@ _SIDE_VEC: dict[Side, tuple[int, int]] = {
     "south": (0, 1),
     "east": (1, 0),
     "west": (-1, 0),
+}
+
+# Belt-direction unit vectors (y grows south), for pass-through lane geometry.
+_DIR_VEC: dict[int, tuple[int, int]] = {
+    NORTH: (0, -1),
+    EAST: (1, 0),
+    SOUTH: (0, 1),
+    WEST: (-1, 0),
 }
 
 
@@ -279,3 +287,23 @@ class PlacedMacro:
     def port_flow_dir(self, port: PortCandidate) -> int:
         """The belt direction the boundary must have for the chosen end."""
         return self.resolved_end(port).flow_entry_dir
+
+    def port_through_exit(self, port: PortCandidate) -> tuple[tuple[int, int], int] | None:
+        """Where a belt fed into this port re-emerges if the lane is run
+        *through* the cell (the far end of a full-span reversible input lane).
+
+        A reversible input lane spans the whole cell in ``flow_entry_dir``, so a
+        belt entering the chosen end traverses it (machines picking off) and
+        exits one tile past the opposite edge, still facing ``flow_entry_dir``.
+        Returns ``(exit_access_tile, exit_dir)``, or ``None`` when the port has
+        no such through-lane (nothing to run through). This is what lets the
+        router pass one belt by several consumers instead of splitting to each.
+        """
+        lane = self.cell.reversible_lanes.get(port.id)
+        if lane is None:
+            return None
+        flow = self.resolved_end(port).flow_entry_dir
+        dx, dy = _DIR_VEC[flow]
+        far = max(lane.tiles, key=lambda t: t[0] * dx + t[1] * dy)
+        exit_access = (self.x + far[0] + dx, self.y + far[1] + dy)
+        return exit_access, flow

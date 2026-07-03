@@ -179,6 +179,26 @@ def test_each_sink_port_serves_one_net(gs_problem):
     assert len(used) == len(set(used)), "an input port is shared by two nets"
 
 
+def test_supplied_input_becomes_connector_not_band():
+    """An intermediate supplied from outside (e.g. circuits built elsewhere)
+    enters through a west-pinned input connector instead of being built as a
+    recipe band, and its now-unused feeders disappear."""
+    inputs = ["electronic-circuit"]
+    plan = solve_ratios("logistic-science-pack", 1.0, DB, inputs=inputs)
+    problem = build_problem(plan, DB.with_inputs(inputs))
+
+    recipe_macros = {m.id for m in problem.macros.values() if m.kind == "recipe-band"}
+    assert "electronic-circuit" not in recipe_macros
+    assert "copper-cable" not in recipe_macros
+
+    conn = problem.macros["in-electronic-circuit"]
+    assert conn.kind == "input-connector"
+    assert problem.pins["in-electronic-circuit"] == "west"
+    # The supplied item is routed from its connector to its real consumers.
+    ec_nets = [n for n in problem.nets if n.item == "electronic-circuit"]
+    assert ec_nets and all(n.source_macro == "in-electronic-circuit" for n in ec_nets)
+
+
 def test_fanout_ports_reachable_from_lane(gs_problem):
     """Every output port of a fanned-out macro is belt-reachable from the
     lane's first tile (the splitter cascade actually distributes)."""

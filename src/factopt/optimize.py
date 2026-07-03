@@ -25,6 +25,7 @@ standard place-and-route path.
 
 from __future__ import annotations
 
+from collections.abc import Iterable
 from dataclasses import dataclass, field
 
 from factopt.data.database import Database
@@ -100,13 +101,14 @@ def _try_loop(
     fuse: bool,
     backend: str = "cpsat",
     workers: int | None = None,
+    inputs: Iterable[str] = (),
 ) -> Candidate:
     from factopt.loop import optimize_loop
 
     try:
         res = optimize_loop(
             target, rate, db, time_budget_s=budget_s, master_time_limit_s=15.0,
-            fuse=fuse, backend=backend, workers=workers,
+            fuse=fuse, backend=backend, workers=workers, inputs=inputs,
         )
     except Exception as exc:
         return Candidate(strategy, ok=False, detail=f"{type(exc).__name__}: {exc}")
@@ -141,21 +143,29 @@ def optimize(
     benders_budget_s: float = 180.0,
     backend: str = "cpsat",
     workers: int | None = None,
+    inputs: Iterable[str] = (),
 ) -> OptimizedBlock:
     """Return the tightest complete, target-meeting block for ``rate``/s of
     ``target``, running the Benders loop in each requested flavour. ``backend``
     selects the master solver engine (``"cpsat"`` or ``"scip"``); ``workers``
-    sets the CP-SAT portfolio size (``None`` = all cores)."""
+    sets the CP-SAT portfolio size (``None`` = all cores).
+
+    ``inputs`` names intermediates supplied to the block from outside (e.g.
+    circuits built in a dedicated section of the factory). They are treated as
+    raw inputs -- not manufactured here -- which shrinks the recipe tree and
+    keeps deep targets tractable. The target itself may not be an input.
+    """
     if rate <= 0:
         raise ValueError("rate must be positive")
-    plan = solve_ratios(target, rate, db)
+    inputs = frozenset(inputs)
+    plan = solve_ratios(target, rate, db, inputs=inputs)
 
     tries = {
         "benders": lambda: _try_loop(
-            "benders", target, rate, db, benders_budget_s, False, backend, workers
+            "benders", target, rate, db, benders_budget_s, False, backend, workers, inputs
         ),
         "dense": lambda: _try_loop(
-            "dense", target, rate, db, benders_budget_s, True, backend, workers
+            "dense", target, rate, db, benders_budget_s, True, backend, workers, inputs
         ),
     }
     candidates = [tries[s]() for s in strategies if s in tries]

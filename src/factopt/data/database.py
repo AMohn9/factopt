@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from collections.abc import Iterable
+from dataclasses import dataclass, field, replace
 
 from factopt.model.game import Assembler, Belt, Inserter, Recipe
 
@@ -30,3 +31,23 @@ class Database:
 
     def is_raw(self, item: str) -> bool:
         return item in self.raw_items or self.recipe_for(item) is None
+
+    def with_inputs(self, items: Iterable[str]) -> "Database":
+        """Return a copy of this database that treats ``items`` as freely
+        supplied ("raw") inputs, on top of the naturally raw items.
+
+        This is how a caller declares that an intermediate built elsewhere in
+        the factory (e.g. green/red circuits produced in a dedicated section)
+        should enter this block as an external input rather than be
+        manufactured inside it. Every stage keys "is this a block boundary?"
+        off :meth:`is_raw`, so adding an item here stops the ratio solver from
+        expanding its recipe and makes :func:`factopt.macros.build_problem`
+        give it a west-edge input connector -- no other code paths change.
+
+        The recipes themselves are left intact (only ``raw_items`` grows), and
+        the original database is not mutated. Passing no items returns ``self``.
+        """
+        extra = frozenset(items)
+        if not extra:
+            return self
+        return replace(self, raw_items=self.raw_items | extra)

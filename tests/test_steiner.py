@@ -127,6 +127,38 @@ def test_congestion_cost_steers_junction_choice():
     assert not (tree.tiles() & hot)
 
 
+def test_colinear_sinks_pass_through_without_splitters():
+    """Two consumers on the trunk's straight line are served inline (the belt
+    runs through each lane and out the far side) with no splitters at all."""
+    grid = Grid(width=26, height=5)
+    # Each consumer is a 2-wide box the belt can only cross via its through-lane.
+    for x in (11, 12, 21, 22):
+        grid.blocked.add((x, 2))
+    sinks = [((10, 2), EAST), ((20, 2), EAST)]
+    exits = [((13, 2), EAST), ((23, 2), EAST)]
+    tree, failed = route_tree(grid, (0, 2), sinks, DB, start_dir=EAST, sink_exits=exits)
+    assert failed is None
+    assert not tree.splitters  # served by pass-by, not by branching
+    assert tree.belts[(10, 2)].direction == EAST
+    assert tree.belts[(20, 2)].direction == EAST
+
+
+def test_offline_sink_still_branches_with_a_splitter():
+    """A consumer off the pass-by line still gets a splitter branch, so the
+    router mixes pass-through (colinear) and splitters (divergent) in one tree."""
+    grid = Grid(width=26, height=12)
+    for x in (11, 12):  # the through-consumer's body, mid-trunk
+        grid.blocked.add((x, 2))
+    # A (far, on the line) is the trunk target; B (mid, on the line) is threaded;
+    # C (off the line, no through-lane) must be tapped with a splitter.
+    sinks = [((20, 2), EAST), ((10, 2), EAST), ((10, 9), EAST)]
+    exits = [((23, 2), EAST), ((13, 2), EAST), None]
+    tree, failed = route_tree(grid, (0, 2), sinks, DB, start_dir=EAST, sink_exits=exits)
+    assert failed is None
+    assert len(tree.splitters) == 1  # only the off-line sink branches
+    assert tree.belts[(10, 2)].direction == EAST
+
+
 def test_faster_belts_use_matching_splitters():
     grid = Grid(width=20, height=12)
     sinks = [((18, 2), EAST), ((18, 10), EAST)]

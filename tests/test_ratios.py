@@ -54,3 +54,42 @@ def test_machine_rounding_up():
 def test_raw_target_rejected():
     with pytest.raises(ValueError):
         solve_ratios("iron-plate", rate=10.0, db=vanilla.DB)
+
+
+def test_supplied_input_prunes_subtree():
+    # Green science pulls in the circuit sub-tree (via inserters).
+    base = {ln.recipe for ln in solve_ratios("logistic-science-pack", 1.0, vanilla.DB).lines}
+    assert {"electronic-circuit", "copper-cable"} <= base
+
+    supplied = solve_ratios(
+        "logistic-science-pack", 1.0, vanilla.DB, inputs=["electronic-circuit"]
+    )
+    recipes = {ln.recipe for ln in supplied.lines}
+    # Supplying the circuit stops it (and its only-for-circuits copper-cable
+    # feeder) from being built inside the block.
+    assert "electronic-circuit" not in recipes
+    assert "copper-cable" not in recipes
+    # It now enters as a raw input instead, and copper-plate is no longer needed.
+    raws = supplied.raw_inputs()
+    assert raws["electronic-circuit"] > 0
+    assert supplied.flows["electronic-circuit"].is_raw
+    assert "copper-plate" not in raws
+
+
+def test_supplied_input_cannot_be_target():
+    with pytest.raises(ValueError):
+        solve_ratios(
+            "electronic-circuit", 10.0, vanilla.DB, inputs=["electronic-circuit"]
+        )
+
+
+def test_with_inputs_leaves_original_db_untouched():
+    db = vanilla.DB
+    assert not db.is_raw("electronic-circuit")
+    aug = db.with_inputs(["electronic-circuit"])
+    assert aug.is_raw("electronic-circuit")
+    assert not db.is_raw("electronic-circuit")  # original unchanged
+    # Only rawness changes; the recipe is still known.
+    assert aug.recipe_for("electronic-circuit") is not None
+    # No items is a no-op that returns the same instance.
+    assert db.with_inputs([]) is db

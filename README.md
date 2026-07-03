@@ -33,7 +33,7 @@ Documentation:
 | Ratios / recipe selection | `factopt.ratios` | Linear programming (PuLP/CBC) |
 | Macro cells + ports | `factopt.macros` | Band/dense cells, one multi-sink net per belt trunk |
 | Master placement + coarse routing | `factopt.master` | CP-SAT (no-overlap, Steiner coarse flows, cuts); pluggable solver backend (SCIP experimental) |
-| Detailed routing | `factopt.routing` | Multi-net negotiated congestion over Steiner-tree A\* (splitter junctions) |
+| Detailed routing | `factopt.routing` | Multi-net negotiated congestion over Steiner-tree A\* (splitter junctions **and** pass-through lanes) |
 | Cut loop | `factopt.loop` | master → route → explain failures → cuts |
 | Static validation | `factopt.validate` | Overlap, bounds, inserters, belt-path flows |
 | Selection | `factopt.optimize` | Run the loop (belt + dense fusion), keep tightest complete block |
@@ -61,10 +61,15 @@ every recipe tried so far (green circuits, red science, green science) via the
 single general-purpose Benders loop (`factopt.loop`), which places, routes,
 validates, and reports candidates with zero layout assumptions. The `dense`
 flavour packs a fusable chain as a **direct-insertion** cell inside that same
-loop, and items feed multiple consumers via **Steiner-tree routing**: one net
-per belt trunk with all its sinks, grown as a real belt tree with splitters
-dropped at the junctions (the VLSI-style answer, replacing the earlier
-pass-through chaining). **Input belt lanes are reversible** — since machines
+loop, and items feed multiple consumers via **hybrid Steiner-tree routing**:
+one net per belt trunk with all its sinks, grown as a real belt tree that mixes
+two ways of serving a consumer — a **splitter junction** where the flow must
+diverge, or a **pass-through lane** where the belt simply runs *through* a
+consumer (which picks off it) and out the far side toward the next sink, no
+splitter at all. The router chooses per sink by cost, so roughly-colinear
+consumers get strung onto one pass-by run (the elegant part of the earlier
+pass-through chaining) while divergent ones still branch (the VLSI-style
+answer). **Input belt lanes are reversible** — since machines
 only *pick* from an input lane, the master feeds each from whichever end
 (west/east, or north/south once rotated) shortens the route, decided as a
 per-lane variable alongside the quarter-turn orientation.
@@ -84,6 +89,12 @@ been retired now that the loop is the standard place-and-route path.
   routes to the first sink, every later sink routes *to any tile of the
   existing tree* via multi-source A\* seeded with one candidate **splitter
   junction** per straight tree belt (2-tile, direction-constrained geometry).
+  A sink whose consumer has a full-span reversible lane can instead be served
+  **inline** — the belt runs *through* that lane and continues from the far
+  edge toward later sinks (a `("lane", …)` A\* move over `port_through_exit`
+  geometry), so a splitter is spent only where the flow genuinely diverges.
+  A cheap `through_cost` vs a larger `splitter_cost` is the single knob that
+  dials between a splitter-heavy tree and a splitter-free pass-by chain.
 
 ### Placement strategy (done)
 
@@ -117,8 +128,10 @@ Optimizer components:
   consumers are partitioned into belt-capacity trunks and each trunk is one
   **multi-sink `FlowNet`** (`FlowSink` per consumer). The router grows each
   trunk as a Steiner tree, so the branch topology adapts to whatever geometry
-  the master chooses — no pass-through lanes, no fixed visit order, no
-  re-chaining between iterations. Splitter cascades at the source appear only
+  the master chooses — no fixed visit order and no re-chaining between
+  iterations. Where a consumer sits roughly on the trunk's line the router runs
+  the belt *through* its reversible lane (served inline, no splitter); where the
+  flow diverges it drops a splitter. Splitter cascades at the source appear only
   when an item needs more than one trunk.
 - [x] `master` — CP-SAT placement (margin-inflated no-overlap, edge pins, port
   clearance) with a two-stage lexicographic objective (bbox area, then
@@ -137,6 +150,9 @@ Optimizer components:
   history costs) over whole **trees**: a contested net rips up its entire tree
   and re-grows it, targeted rip-up for stragglers, underground cross-capture
   avoidance, and structured `RoutingFailure`s attributed to the failing sink.
+  It reads each placed consumer's `port_through_exit` and hands the router the
+  per-sink exit tiles, so pass-through vs splitter is decided against the actual
+  placement (and re-decided every rip-up).
 - [x] `master.cuts` / `routing.explain` — routing failures become serializable
   cuts (`nogood`, `pin_access`, `corridor`) with human-readable explanations,
   attributed to blocking macros via reachability flooding.
@@ -171,15 +187,18 @@ generators are no longer benchmarked.
 | Goal | Flavour | Footprint | Notes |
 |------|---------|-----------|-------|
 | Green science 1/s | `benders` | 19×32 = 608t | best routed steiner run (100 belt tiles); reversible input lanes tightened it below the earlier 609–672t; varies by run |
+| Green science 1/s | `benders` | 21×29 = 609t | hybrid pass-through routing: same footprint, **2 splitters** (vs 4) as the iron trunk runs *through* consumers instead of branching to each; 120 belt tiles, validated |
 | Green circuits 20/s | `dense` | 64×17 = 1088t | whole chain fuses to a direct-insertion cell; 35 belt tiles |
 
 The loop is the only path and has no structural layout assumptions; its
 footprint is expected to drop as cut families sharpen (corridor min-cuts,
 congestion pricing) and margins become failure-driven instead of scheduled.
-Multi-consumer items route as **Steiner trees** (one net per trunk, splitters
-at junctions), which removes the pass-through-lane geometry constraint and is
-the scalable path to more complex, late-game targets where consumers cannot be
-chained in a line.
+Multi-consumer items route as **hybrid Steiner trees** (one net per trunk;
+splitters where the flow diverges, pass-through lanes where a consumer sits on
+the trunk's line). This keeps the topology freedom that removed the old
+fixed-visit-order constraint while recovering the splitter-free elegance of a
+simple pass-by where the geometry allows it — the scalable path to more
+complex, late-game targets where consumers cannot be chained in a line.
 
 Sample blueprints are checked into `blueprints/` (a `benders` candidate with
 its markdown report and debug SVG lives in `blueprints/benders/`).
@@ -199,10 +218,11 @@ its markdown report and debug SVG lives in `blueprints/benders/`).
   producer/consumer pair becomes one dense direct-insertion cell, the rest stay
   belt bands. This handles green circuits (the whole plan fuses) and green
   science (only copper-cable → electronic-circuit fuses; gears fan out to the
-  belt and inserter bands on belts). With Steiner-tree trunks, green science
-  routes with one iron net feeding all four consumers as a single splitter-
-  branched tree (~180 belt tiles + 4 splitters vs ~335 belts for the original
-  per-consumer fan-out). A geometric finding shaped the cell: the density direct
+  belt and inserter bands on belts). With hybrid Steiner-tree trunks, green
+  science routes with one iron net feeding all its consumers off a single
+  trunk that runs *through* the ones on its line and splitters to the rest
+  (routed runs land around 2 splitters vs 4 for the pure-tree version, at a
+  comparable footprint). A geometric finding shaped the cell: the density direct
   insertion buys (removing lanes) is exactly what removes the edge access
   interior machines need for their *other* items, so the dense cell is a single
   row (all machines edge-accessible). Remaining: only single-internal-item pairs
@@ -224,7 +244,10 @@ its markdown report and debug SVG lives in `blueprints/benders/`).
   dev machine): launch flags, source wiring, and the statistics API call are
   written defensively but flagged for first-run verification.
 - **Scope:** single-product blocks, belt-based (no bots), no fluids, higher-rate
-  general chains can fail to route (e.g. green science at 2/s).
+  general chains can fail to route (e.g. green science at 2/s). Very deep
+  targets (e.g. purple science built end-to-end) are best decomposed by
+  **supplying intermediates as inputs** (see Usage) rather than synthesized in
+  one block.
 - **Pluggable master solver; SCIP is not competitive on the full model.** The
   master (placement + coarse routing + cuts) is built against a solver facade
   (`factopt.master.backend`) with two implementations: CP-SAT (default) and
@@ -265,6 +288,28 @@ print(res.blueprint_string)     # tightest complete block, paste into Factorio
 The loop runs several CP-SAT master solves per flavour and can take minutes;
 pass `strategies=("dense",)` (or `("benders",)`) to run just one, or tune
 `benders_budget_s`.
+
+### Supplying intermediates as inputs
+
+Deep targets (e.g. the higher science packs) can be too large to place and
+route as a single self-contained block. If some intermediates are already
+built in a dedicated section of the factory, pass them via `inputs=` and they
+are treated as **externally supplied raw inputs** — their sub-tree is not built
+here, and each enters the block through a west-edge input connector:
+
+```python
+# Purple science, with circuits fed in from elsewhere instead of built here.
+res = optimize(
+    "production-science-pack", 1.0, vanilla.DB,
+    inputs=["electronic-circuit", "advanced-circuit"],
+)
+```
+
+`inputs` is accepted by `optimize`, `optimize_loop`, and `solve_ratios` (and
+`scripts/steiner_run.py --input ITEM`, repeatable). Under the hood it just adds
+the items to the database's raw set for that run (`db.with_inputs(...)`), so
+every stage that keys off `db.is_raw` — the ratio LP, macro construction, and
+routing — sees them as the block boundary with no other changes.
 
 ### The Benders loop directly (report + debug SVG)
 

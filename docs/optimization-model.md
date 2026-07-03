@@ -86,7 +86,13 @@ reachable from the target. For every non-raw item \(i\):
 
 where \(\mathrm{net}_q(i)\) is the recipe's production minus consumption of
 \(i\) per craft. Raw items (iron plate, copper plate, …) are unconstrained
-free inputs — the boundary of the block. The objective minimizes total
+free inputs — the boundary of the block. The caller can *extend* that boundary
+at runtime by naming intermediates as **supplied inputs** (`inputs=` /
+`db.with_inputs(...)`): those items are added to the raw set for the run, so
+their recipes are never expanded and they enter through west-edge input
+connectors like any other raw. This is the lever for keeping deep targets
+(e.g. higher science packs, fed pre-built circuits) small enough to place and
+route. The objective minimizes total
 machine-time \(\sum_q (t_q / s)\, r_q\) (craft time over assembler speed),
 which is proportional to machine count. Machine counts are then
 \(\lceil r_q t_q / s \rceil\).
@@ -140,17 +146,20 @@ into **trunks**: bins whose total demand fits a single belt lane's throughput
 single source port and one `FlowSink` per consumer, annotated with rates.
 
 The intent is that the detailed router realizes each trunk as a **Steiner
-tree** — one belt leaves the source and splitters branch it toward every sink.
-Because the trunk's *total* demand fits one belt, every tree edge (which
-carries only the demand of the sinks below it) fits too, so no per-edge
-capacity checking is needed inside a net. The partition is the only place belt
-capacity appears as a hard combinatorial constraint; everything downstream
-inherits feasibility by construction.
+tree** — one belt leaves the source and reaches every sink, either by branching
+to it through a splitter or by running *through* it (§7.1). Because the trunk's
+*total* demand fits one belt, every tree edge (which carries only the demand of
+the sinks below it) fits too, so no per-edge capacity checking is needed inside
+a net. The partition is the only place belt capacity appears as a hard
+combinatorial constraint; everything downstream inherits feasibility by
+construction.
 
 The order of sinks within a trunk carries no meaning — the router chooses the
-branch topology from actual geometry. This is what freed the system from the
-earlier pass-through-chaining scheme, where consumers had to be visitable in a
-line.
+branch topology *and* which consumers to string inline from the actual
+geometry. This keeps the topology freedom that freed the system from the
+earlier pass-through-chaining scheme (where consumers had to be visitable in a
+fixed line) while letting the router *recover* a splitter-free pass-by chain
+wherever the geometry happens to lay consumers out along one line.
 
 ## 5. The master problem
 
@@ -337,6 +346,24 @@ underground-belt geometry.
   underground endpoints, port mouths, and existing splitters can never be
   tapped. The search itself picks the cheapest tap point, so the branch
   topology is an emergent property of the geometry, not an input.
+- **Pass-through lanes (serving a sink without a splitter).** A splitter is not
+  the only way to serve a consumer. A machine only *picks* off its input lane,
+  and that lane spans the whole cell (the reversible-lane geometry of §5.1), so
+  a belt can run straight *into* the consumer's lane and out the far edge — the
+  machine takes its share off the passing belt and the remainder continues to
+  the next sink. This is exactly balanced because the trunk's total demand fits
+  one belt: each consumer removes its rate and the chain's terminus consumes the
+  rest. The router models this as a special A\* move: when a search reaches a
+  consumer's access tile it may place a belt feeding the lane and *jump* to the
+  lane's far-side exit tile (`PlacedMacro.port_through_exit`), continuing the
+  search from there. A run-through costs a small `through_cost` while a splitter
+  tap costs a larger `splitter_cost`, so the A\* prefers threading a consumer
+  that lies on its path and only spends a splitter where the flow must actually
+  diverge. The result is a **hybrid tree**: colinear consumers are strung onto
+  one pass-by run (zero splitters), divergent ones branch. Connectivity is the
+  correctness contract — a run-through consumer is an interior node whose exit
+  must feed onward, and the static belt-path check (§7.3) verifies every sink is
+  reached, so a dead-ended pass-through cannot slip through.
 - If some sink is unreachable under the farthest-first trunk order, alternate
   trunk targets are retried (each sink once) — a trunk squeezed through a
   1-wide corridor can make junctions impossible for one order but not another.
@@ -501,7 +528,9 @@ that costs:
   not exact. A placement can be declared unroutable that a smarter router
   would route; the resulting cut then over-constrains the master. In practice
   the escalation ladder (negotiation → hardening → targeted rip-up) makes
-  this rare.
+  this rare. The splitter-vs-pass-through choice (§7.1) is part of this greedy
+  search — A\* takes the locally cheaper option per sink inside a single tree
+  grow, so a tree is a good hybrid, not a globally minimal mix of the two.
 - **Rates are handled entirely by construction** (trunk partition + dedicated
   belts), never as routing constraints — clean, but it forbids deliberately
   merging compatible flows onto one belt.

@@ -50,7 +50,10 @@ Supporting layers, used throughout: `factopt.model` (entity/blueprint DTOs),
   `Assembler`, `Belt`, `Inserter`).
 - **`factopt.data`** — `database.Database` bundles recipes and prototypes for
   one ruleset and defines rawness (an item with no producing recipe is a
-  freely supplied input). `data.factorio` normalizes recipes from Draftsman's
+  freely supplied input); `Database.with_inputs(items)` returns a copy that
+  additionally treats named intermediates as raw, which is how a caller feeds
+  pre-built inputs (e.g. circuits) into a block instead of synthesizing them.
+  `data.factorio` normalizes recipes from Draftsman's
   bundled vanilla 2.0 prototypes; `data.vanilla` adds curated inserter
   throughputs and the explicit raw-item boundary, and exposes the ready-to-use
   `vanilla.DB`.
@@ -85,7 +88,10 @@ Supporting layers, used throughout: `factopt.model` (entity/blueprint DTOs),
     entities/ports/directions rotating in lockstep), reversible-lane support
     (`PortEnd`, `ReversibleLane`), and `PlacedMacro` (a cell at a position +
     orientation + per-port reversal choice, able to emit its global-coordinate
-    entities).
+    entities). `PlacedMacro.port_through_exit` reports where a belt fed into a
+    full-span reversible lane re-emerges on the far edge — the geometry the
+    router needs to run one belt *through* a consumer instead of splitting to
+    it.
   - `macros.library` builds the `MacroProblem` for a plan: band and dense
     cells, west-pinned raw-input connectors, the east-pinned output collector,
     the trunk partition (consumers packed into belt-capacity bins), and one
@@ -103,14 +109,21 @@ Supporting layers, used throughout: `factopt.model` (entity/blueprint DTOs),
     solver-agnostic; SCIP linearizes CP-SAT's globals with big-M.
 - **`factopt.routing`** — the detailed-routing oracle.
   - `routing.astar` — direction-aware single-path A\* over (tile, heading)
-    states with underground-belt support; the shared search core.
+    states with underground-belt support; the shared search core. Besides
+    surface and underground moves it supports optional **lane edges**: a
+    caller-supplied "feed this consumer's lane and jump to its far side" move,
+    which is how a belt is routed *through* a consumer.
   - `routing.steiner` — `route_tree`: grows one net's belt tree (trunk to the
-    farthest sink, then Prim-style branches seeded at candidate splitter
-    junctions on straight tree belts).
+    farthest sink, then Prim-style branches). Each sink is served either by a
+    **splitter junction** seeded on a straight tree belt or, when its consumer
+    has a through-lane (`sink_exits`), by a **pass-through** run that continues
+    from the lane's far edge — A\* picks the cheaper (`through_cost` vs
+    `splitter_cost`) per sink, yielding a hybrid splitter/pass-by tree.
   - `routing.multinet` — `route_nets`: negotiated congestion across all nets
     (present + history costs, whole-tree rip-up, hardening and targeted-rip-up
     fallbacks), endpoint reservation and pre-checks, structured
-    `RoutingFailure`s.
+    `RoutingFailure`s. Reads each placed sink's `port_through_exit` and passes
+    the per-sink exit tiles into `route_tree`.
   - `routing.explain` — failure attribution: floods the region reachable from
     a failed net's start to find the walling macros, and emits the
     corresponding cuts.

@@ -11,6 +11,8 @@ Examples
     python scripts/steiner_run.py green-science-steiner-1ps
     python scripts/steiner_run.py gs-fast --master-s 30 --iters 20
     python scripts/steiner_run.py red-science --target automation-science-pack
+    python scripts/steiner_run.py purple --target production-science-pack \
+        --input electronic-circuit --input advanced-circuit
 """
 
 from __future__ import annotations
@@ -39,6 +41,19 @@ def main() -> int:
                    help="master solver engine")
     p.add_argument("--workers", type=int, default=None,
                    help="CP-SAT search portfolio size (default: all cores)")
+    p.add_argument("--input", dest="inputs", action="append", default=[], metavar="ITEM",
+                   help="intermediate supplied from outside the block (treated as a "
+                        "raw input); repeatable, e.g. --input electronic-circuit")
+    p.add_argument("--max-w", type=int, default=None,
+                   help="hard cap on bounding-box width (tiles)")
+    p.add_argument("--max-h", type=int, default=None,
+                   help="hard cap on bounding-box height (tiles)")
+    p.add_argument("--max-area", type=int, default=None,
+                   help="hard cap on bounding-box area (tiles); e.g. 608 to ask "
+                        "whether the loop can route inside a known footprint")
+    p.add_argument("--start-loose", action="store_true",
+                   help="begin at the roomiest margin/slack rung for a fast first "
+                        "incumbent, then tighten (instead of starting tight)")
     p.add_argument("--out-dir", default="blueprints/dense", help="artifact directory")
     args = p.parse_args()
 
@@ -54,8 +69,15 @@ def main() -> int:
         label=args.name,
         backend=args.backend,
         workers=args.workers,
+        inputs=args.inputs,
+        max_w=args.max_w,
+        max_h=args.max_h,
+        max_area=args.max_area,
+        start_loose=args.start_loose,
     )
     print(f"feasible={res.feasible} in {time.time() - t:.0f}s")
+    if args.inputs:
+        print("supplied inputs:", ", ".join(args.inputs))
 
     b = res.best
     if b is None:

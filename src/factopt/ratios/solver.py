@@ -12,6 +12,7 @@ be added later without restructuring.
 from __future__ import annotations
 
 import math
+from collections.abc import Iterable
 from dataclasses import dataclass
 
 import pulp
@@ -113,8 +114,19 @@ def solve_ratios(
     rate: float,
     db: Database,
     assembler: str = "assembling-machine-2",
+    inputs: Iterable[str] = (),
 ) -> ProductionPlan:
-    """Compute a production plan for ``rate`` items/s of ``target``."""
+    """Compute a production plan for ``rate`` items/s of ``target``.
+
+    ``inputs`` names intermediates that are supplied to the block from outside
+    (e.g. circuits built in a dedicated section of the factory). They are
+    treated as raw: their recipes are not expanded and they surface as raw
+    inputs of the block instead of being manufactured internally.
+    """
+    inputs = frozenset(inputs)
+    if target in inputs:
+        raise ValueError(f"target {target!r} cannot also be supplied as an input")
+    db = db.with_inputs(inputs)
     if rate <= 0:
         raise ValueError("rate must be positive")
     if db.is_raw(target):

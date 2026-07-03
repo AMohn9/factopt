@@ -125,6 +125,7 @@ _OPP = {NORTH: SOUTH, SOUTH: NORTH, EAST: WEST, WEST: EAST}
 # An action records what to place at a tile when reconstructing:
 #   ("belt", (x, y), out_dir)
 #   ("ug", (entrance), (exit), dir)
+#   ("lane", entry_tile, belt_dir, exit_tile, exit_dir, tag)  # pass-through
 # plus caller-defined seed actions (e.g. the Steiner router's splitter
 # junction), which _run_astar passes through untouched.
 _Action = tuple
@@ -146,6 +147,8 @@ def _run_astar(
     underground_penalty: float,
     tile_cost,
     ug_blocked: set | None,
+    lane_edges: dict[tuple[int, int], tuple[int, tuple[int, int], int, object]] | None = None,
+    through_cost: float = 0.0,
 ) -> list[_Action] | None:
     """Direction-aware A* from arbitrary seeds to ``goal``.
 
@@ -155,10 +158,19 @@ def _run_astar(
     (a plain belt for point-to-point routes, a splitter junction for Steiner
     branches). Returns the winning action list — terminal goal belt included —
     or ``None``.
+
+    ``lane_edges`` maps a tile to ``(belt_dir, exit_tile, exit_dir, tag)``: when
+    the search reaches that tile it may place a belt facing ``belt_dir`` (feeding
+    a pre-built pass-through lane) and jump to ``exit_tile`` arriving ``exit_dir``
+    for ``through_cost``. This is how the Steiner router runs one belt *through*
+    a consumer (which picks off it) and out the far side toward the next sink,
+    instead of dropping a splitter — the ``tag`` identifies the served sink. A
+    lane tile has no other continuation (a consumer mouth feeds only its lane).
     """
+    lane_edges = lane_edges or {}
 
     def placeable(t: tuple[int, int]) -> bool:
-        return t == goal or grid.is_free(*t)
+        return t == goal or grid.is_free(*t) or t in lane_edges
 
     def extra(t: tuple[int, int]) -> float:
         return tile_cost(t) if tile_cost is not None else 0.0
@@ -199,6 +211,20 @@ def _run_astar(
                 actions.reverse()
                 actions.append(("belt", goal, out))
                 return actions
+            continue
+
+        # Pass-through lane: place a belt feeding the consumer's pre-built lane
+        # and jump to its far side. A lane mouth has no other continuation.
+        lane = lane_edges.get(tile)
+        if lane is not None:
+            belt_dir, exit_tile, exit_dir, tag = lane
+            if belt_dir != _OPP[d] and placeable(exit_tile):
+                push(
+                    (exit_tile[0], exit_tile[1], exit_dir),
+                    g[node] + through_cost + extra(tile),
+                    node,
+                    ("lane", tile, belt_dir, exit_tile, exit_dir, tag),
+                )
             continue
 
         # Surface belt at ``tile`` (must be free) turning to any non-reverse dir.
