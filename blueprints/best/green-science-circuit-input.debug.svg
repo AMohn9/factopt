@@ -1,0 +1,80 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="204" height="396" viewBox="-12 -12 204 396" font-family="monospace">
+<rect x="0" y="0" width="180" height="372" fill="#fafafa" stroke="#444"/>
+<line x1="0" y1="0" x2="0" y2="372" stroke="#ddd" stroke-width="1"/>
+<line x1="48" y1="0" x2="48" y2="372" stroke="#ddd" stroke-width="1"/>
+<line x1="96" y1="0" x2="96" y2="372" stroke="#ddd" stroke-width="1"/>
+<line x1="144" y1="0" x2="144" y2="372" stroke="#ddd" stroke-width="1"/>
+<line x1="192" y1="0" x2="192" y2="372" stroke="#ddd" stroke-width="1"/>
+<line x1="240" y1="0" x2="240" y2="372" stroke="#ddd" stroke-width="1"/>
+<line x1="288" y1="0" x2="288" y2="372" stroke="#ddd" stroke-width="1"/>
+<line x1="336" y1="0" x2="336" y2="372" stroke="#ddd" stroke-width="1"/>
+<line x1="384" y1="0" x2="384" y2="372" stroke="#ddd" stroke-width="1"/>
+<line x1="432" y1="0" x2="432" y2="372" stroke="#ddd" stroke-width="1"/>
+<line x1="0" y1="0" x2="180" y2="0" stroke="#ddd" stroke-width="1"/>
+<line x1="0" y1="48" x2="180" y2="48" stroke="#ddd" stroke-width="1"/>
+<line x1="0" y1="96" x2="180" y2="96" stroke="#ddd" stroke-width="1"/>
+<line x1="0" y1="144" x2="180" y2="144" stroke="#ddd" stroke-width="1"/>
+<line x1="0" y1="192" x2="180" y2="192" stroke="#ddd" stroke-width="1"/>
+<line x1="0" y1="240" x2="180" y2="240" stroke="#ddd" stroke-width="1"/>
+<line x1="0" y1="288" x2="180" y2="288" stroke="#ddd" stroke-width="1"/>
+<line x1="0" y1="336" x2="180" y2="336" stroke="#ddd" stroke-width="1"/>
+<line x1="0" y1="384" x2="180" y2="384" stroke="#ddd" stroke-width="1"/>
+<line x1="0" y1="432" x2="180" y2="432" stroke="#ddd" stroke-width="1"/>
+<line x1="24.0" y1="24.0" x2="72.0" y2="24.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
+<line x1="24.0" y1="312.0" x2="24.0" y2="360.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
+<line x1="24.0" y1="360.0" x2="72.0" y2="360.0" stroke="#8abf8a" stroke-width="3.0" opacity="0.7"/>
+<line x1="72.0" y1="24.0" x2="120.0" y2="24.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
+<line x1="72.0" y1="72.0" x2="120.0" y2="72.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
+<line x1="72.0" y1="312.0" x2="120.0" y2="312.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
+<line x1="72.0" y1="360.0" x2="120.0" y2="360.0" stroke="#8abf8a" stroke-width="3.0" opacity="0.7"/>
+<line x1="120.0" y1="24.0" x2="120.0" y2="72.0" stroke="#8abf8a" stroke-width="3.0" opacity="0.7"/>
+<line x1="120.0" y1="72.0" x2="120.0" y2="120.0" stroke="#8abf8a" stroke-width="3.0" opacity="0.7"/>
+<line x1="120.0" y1="120.0" x2="120.0" y2="168.0" stroke="#8abf8a" stroke-width="3.0" opacity="0.7"/>
+<line x1="120.0" y1="168.0" x2="120.0" y2="216.0" stroke="#8abf8a" stroke-width="3.0" opacity="0.7"/>
+<line x1="120.0" y1="264.0" x2="120.0" y2="312.0" stroke="#8abf8a" stroke-width="3.0" opacity="0.7"/>
+<line x1="120.0" y1="312.0" x2="120.0" y2="360.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
+<line x1="120.0" y1="360.0" x2="168.0" y2="360.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
+<line x1="168.0" y1="72.0" x2="168.0" y2="120.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
+<line x1="168.0" y1="120.0" x2="168.0" y2="168.0" stroke="#8abf8a" stroke-width="2.3" opacity="0.7"/>
+<line x1="168.0" y1="168.0" x2="168.0" y2="216.0" stroke="#8abf8a" stroke-width="2.3" opacity="0.7"/>
+<line x1="168.0" y1="216.0" x2="168.0" y2="264.0" stroke="#8abf8a" stroke-width="2.3" opacity="0.7"/>
+<line x1="168.0" y1="264.0" x2="168.0" y2="312.0" stroke="#8abf8a" stroke-width="2.3" opacity="0.7"/>
+<rect x="120" y="228" width="36" height="108" fill="#cfe3f7" stroke="#333" opacity="0.9"/>
+<text x="123.60000000000001" y="240" font-size="10">inserter</text>
+<circle cx="126.0" cy="246.0" r="4" fill="#d62728"><title>inserter.inserter-out-0</title></circle>
+<circle cx="126.0" cy="318.0" r="4" fill="#1f77b4"><title>inserter.electronic-circuit-in</title></circle>
+<circle cx="150.0" cy="330.0" r="4" fill="#1f77b4"><title>inserter.iron-gear-wheel-in</title></circle>
+<circle cx="126.0" cy="234.0" r="4" fill="#1f77b4"><title>inserter.iron-plate-in</title></circle>
+<rect x="120" y="0" width="36" height="84" fill="#cfe3f7" stroke="#333" opacity="0.9"/>
+<text x="123.60000000000001" y="12" font-size="10">iron-gear-wheel</text>
+<circle cx="150.0" cy="78.0" r="4" fill="#d62728"><title>iron-gear-wheel.iron-gear-wheel-out-0</title></circle>
+<circle cx="126.0" cy="6.0" r="4" fill="#1f77b4"><title>iron-gear-wheel.iron-plate-in</title></circle>
+<rect x="0" y="48" width="96" height="288" fill="#cfe3f7" stroke="#333" opacity="0.9"/>
+<text x="3.5999999999999996" y="60" font-size="10">logistic-science-pack</text>
+<circle cx="6.0" cy="330.0" r="4" fill="#d62728"><title>logistic-science-pack.logistic-science-pack-out-0</title></circle>
+<circle cx="78.0" cy="330.0" r="4" fill="#1f77b4"><title>logistic-science-pack.inserter-in</title></circle>
+<circle cx="90.0" cy="54.0" r="4" fill="#1f77b4"><title>logistic-science-pack.transport-belt-in</title></circle>
+<rect x="120" y="108" width="36" height="96" fill="#cfe3f7" stroke="#333" opacity="0.9"/>
+<text x="123.60000000000001" y="120" font-size="10">transport-belt</text>
+<circle cx="126.0" cy="114.0" r="4" fill="#d62728"><title>transport-belt.transport-belt-out-0</title></circle>
+<circle cx="126.0" cy="186.0" r="4" fill="#1f77b4"><title>transport-belt.iron-plate-in</title></circle>
+<circle cx="150.0" cy="198.0" r="4" fill="#1f77b4"><title>transport-belt.iron-gear-wheel-in</title></circle>
+<rect x="0" y="360" width="24" height="12" fill="#d9f2d9" stroke="#333" opacity="0.9"/>
+<text x="3.5999999999999996" y="372" font-size="10">in-electronic-circuit</text>
+<circle cx="18.0" cy="366.0" r="4" fill="#d62728"><title>in-electronic-circuit.electronic-circuit-out-0</title></circle>
+<rect x="0" y="0" width="24" height="12" fill="#d9f2d9" stroke="#333" opacity="0.9"/>
+<text x="3.5999999999999996" y="12" font-size="10">in-iron-plate</text>
+<circle cx="18.0" cy="6.0" r="4" fill="#d62728"><title>in-iron-plate.iron-plate-out-0</title></circle>
+<rect x="156" y="360" width="24" height="12" fill="#f7ddc7" stroke="#333" opacity="0.9"/>
+<text x="159.60000000000002" y="372" font-size="10">out</text>
+<circle cx="162.0" cy="366.0" r="4" fill="#1f77b4"><title>out.logistic-science-pack-in</title></circle>
+<polyline points="30.0,366.0 42.0,366.0 54.0,366.0 66.0,366.0 78.0,366.0 90.0,366.0 102.0,366.0 114.0,366.0 114.0,354.0 114.0,342.0 114.0,330.0 114.0,318.0" fill="none" stroke="#6a3d9a" stroke-width="2" opacity="0.8"><title>electronic-circuit:in-electronic-circuit-t0[0]</title></polyline>
+<polyline points="114.0,246.0 102.0,246.0 102.0,258.0 102.0,270.0 102.0,282.0 102.0,294.0 102.0,306.0 102.0,318.0 102.0,330.0 102.0,342.0 90.0,342.0 78.0,342.0" fill="none" stroke="#6a3d9a" stroke-width="2" opacity="0.8"><title>inserter:inserter-t0[0]</title></polyline>
+<polyline points="162.0,78.0 174.0,78.0 174.0,90.0 174.0,102.0 174.0,114.0 174.0,126.0 174.0,138.0 174.0,150.0 174.0,162.0 174.0,174.0 174.0,186.0 174.0,198.0 174.0,210.0 174.0,222.0 174.0,234.0 174.0,246.0 174.0,258.0 174.0,270.0 174.0,282.0 174.0,294.0 174.0,306.0 174.0,318.0 174.0,330.0 162.0,330.0" fill="none" stroke="#6a3d9a" stroke-width="2" opacity="0.8"><title>iron-gear-wheel:iron-gear-wheel-t0[0]</title></polyline>
+<polyline points="162.0,186.0 162.0,198.0" fill="none" stroke="#6a3d9a" stroke-width="2" opacity="0.8"><title>iron-gear-wheel:iron-gear-wheel-t0[1]</title></polyline>
+<polyline points="102.0,18.0 114.0,18.0 114.0,6.0" fill="none" stroke="#6a3d9a" stroke-width="2" opacity="0.8"><title>iron-plate:in-iron-plate-t0[0]</title></polyline>
+<polyline points="30.0,6.0 30.0,18.0 30.0,30.0 42.0,30.0 54.0,30.0 66.0,30.0 78.0,30.0 90.0,30.0 102.0,30.0 114.0,30.0 114.0,42.0 114.0,54.0 114.0,66.0 114.0,78.0 114.0,90.0 114.0,150.0 114.0,162.0 114.0,222.0 114.0,234.0" fill="none" stroke="#6a3d9a" stroke-width="2" opacity="0.8"><title>iron-plate:in-iron-plate-t0[1]</title></polyline>
+<polyline points="78.0,18.0 90.0,18.0 90.0,6.0 102.0,6.0 162.0,6.0 174.0,6.0 174.0,18.0 174.0,30.0 162.0,30.0 162.0,42.0 162.0,102.0 162.0,114.0 162.0,126.0 162.0,138.0 162.0,150.0 162.0,210.0 162.0,222.0 150.0,222.0 138.0,222.0 126.0,222.0 126.0,210.0 114.0,210.0 114.0,198.0 114.0,186.0" fill="none" stroke="#6a3d9a" stroke-width="2" opacity="0.8"><title>iron-plate:in-iron-plate-t0[2]</title></polyline>
+<polyline points="6.0,342.0 18.0,342.0 30.0,342.0 42.0,342.0 54.0,342.0 66.0,342.0 126.0,342.0 138.0,342.0 150.0,342.0 150.0,354.0 150.0,366.0" fill="none" stroke="#6a3d9a" stroke-width="2" opacity="0.8"><title>logistic-science-pack:logistic-science-pack-t0[0]</title></polyline>
+<polyline points="114.0,114.0 114.0,102.0 102.0,102.0 102.0,90.0 102.0,78.0 102.0,66.0 102.0,54.0 102.0,42.0 90.0,42.0" fill="none" stroke="#6a3d9a" stroke-width="2" opacity="0.8"><title>transport-belt:transport-belt-t0[0]</title></polyline>
+</svg>

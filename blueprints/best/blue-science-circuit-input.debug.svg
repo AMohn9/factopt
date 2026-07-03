@@ -1,0 +1,94 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="696" height="324" viewBox="-12 -12 696 324" font-family="monospace">
+<rect x="0" y="0" width="672" height="300" fill="#fafafa" stroke="#444"/>
+<line x1="0" y1="0" x2="0" y2="300" stroke="#ddd" stroke-width="1"/>
+<line x1="48" y1="0" x2="48" y2="300" stroke="#ddd" stroke-width="1"/>
+<line x1="96" y1="0" x2="96" y2="300" stroke="#ddd" stroke-width="1"/>
+<line x1="144" y1="0" x2="144" y2="300" stroke="#ddd" stroke-width="1"/>
+<line x1="192" y1="0" x2="192" y2="300" stroke="#ddd" stroke-width="1"/>
+<line x1="240" y1="0" x2="240" y2="300" stroke="#ddd" stroke-width="1"/>
+<line x1="288" y1="0" x2="288" y2="300" stroke="#ddd" stroke-width="1"/>
+<line x1="336" y1="0" x2="336" y2="300" stroke="#ddd" stroke-width="1"/>
+<line x1="384" y1="0" x2="384" y2="300" stroke="#ddd" stroke-width="1"/>
+<line x1="432" y1="0" x2="432" y2="300" stroke="#ddd" stroke-width="1"/>
+<line x1="480" y1="0" x2="480" y2="300" stroke="#ddd" stroke-width="1"/>
+<line x1="528" y1="0" x2="528" y2="300" stroke="#ddd" stroke-width="1"/>
+<line x1="576" y1="0" x2="576" y2="300" stroke="#ddd" stroke-width="1"/>
+<line x1="624" y1="0" x2="624" y2="300" stroke="#ddd" stroke-width="1"/>
+<line x1="672" y1="0" x2="672" y2="300" stroke="#ddd" stroke-width="1"/>
+<line x1="0" y1="0" x2="672" y2="0" stroke="#ddd" stroke-width="1"/>
+<line x1="0" y1="48" x2="672" y2="48" stroke="#ddd" stroke-width="1"/>
+<line x1="0" y1="96" x2="672" y2="96" stroke="#ddd" stroke-width="1"/>
+<line x1="0" y1="144" x2="672" y2="144" stroke="#ddd" stroke-width="1"/>
+<line x1="0" y1="192" x2="672" y2="192" stroke="#ddd" stroke-width="1"/>
+<line x1="0" y1="240" x2="672" y2="240" stroke="#ddd" stroke-width="1"/>
+<line x1="0" y1="288" x2="672" y2="288" stroke="#ddd" stroke-width="1"/>
+<line x1="0" y1="336" x2="672" y2="336" stroke="#ddd" stroke-width="1"/>
+<line x1="0" y1="384" x2="672" y2="384" stroke="#ddd" stroke-width="1"/>
+<line x1="0" y1="432" x2="672" y2="432" stroke="#ddd" stroke-width="1"/>
+<line x1="0" y1="480" x2="672" y2="480" stroke="#ddd" stroke-width="1"/>
+<line x1="0" y1="528" x2="672" y2="528" stroke="#ddd" stroke-width="1"/>
+<line x1="0" y1="576" x2="672" y2="576" stroke="#ddd" stroke-width="1"/>
+<line x1="0" y1="624" x2="672" y2="624" stroke="#ddd" stroke-width="1"/>
+<line x1="0" y1="672" x2="672" y2="672" stroke="#ddd" stroke-width="1"/>
+<line x1="24.0" y1="24.0" x2="72.0" y2="24.0" stroke="#8abf8a" stroke-width="3.0" opacity="0.7"/>
+<line x1="24.0" y1="24.0" x2="24.0" y2="72.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
+<line x1="24.0" y1="72.0" x2="24.0" y2="120.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
+<line x1="24.0" y1="120.0" x2="72.0" y2="120.0" stroke="#8abf8a" stroke-width="3.0" opacity="0.7"/>
+<line x1="24.0" y1="168.0" x2="24.0" y2="216.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
+<line x1="24.0" y1="216.0" x2="72.0" y2="216.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
+<line x1="24.0" y1="264.0" x2="24.0" y2="312.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
+<line x1="24.0" y1="312.0" x2="72.0" y2="312.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
+<line x1="72.0" y1="120.0" x2="120.0" y2="120.0" stroke="#8abf8a" stroke-width="3.0" opacity="0.7"/>
+<line x1="72.0" y1="312.0" x2="120.0" y2="312.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
+<line x1="120.0" y1="120.0" x2="168.0" y2="120.0" stroke="#8abf8a" stroke-width="3.0" opacity="0.7"/>
+<line x1="120.0" y1="168.0" x2="168.0" y2="168.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
+<line x1="120.0" y1="264.0" x2="168.0" y2="264.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
+<line x1="120.0" y1="312.0" x2="168.0" y2="312.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
+<line x1="168.0" y1="120.0" x2="168.0" y2="168.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
+<line x1="168.0" y1="264.0" x2="168.0" y2="312.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
+<line x1="600.0" y1="120.0" x2="648.0" y2="120.0" stroke="#8abf8a" stroke-width="2.0" opacity="0.7"/>
+<rect x="48" y="12" width="576" height="108" fill="#cfe3f7" stroke="#333" opacity="0.9"/>
+<text x="51.599999999999994" y="24" font-size="10">chemical-science-pack</text>
+<circle cx="618.0" cy="102.0" r="4" fill="#d62728"><title>chemical-science-pack.chemical-science-pack-out-0</title></circle>
+<circle cx="54.0" cy="30.0" r="4" fill="#1f77b4"><title>chemical-science-pack.advanced-circuit-in</title></circle>
+<circle cx="54.0" cy="18.0" r="4" fill="#1f77b4"><title>chemical-science-pack.engine-unit-in</title></circle>
+<circle cx="54.0" cy="114.0" r="4" fill="#1f77b4"><title>chemical-science-pack.sulfur-in</title></circle>
+<rect x="144" y="156" width="504" height="108" fill="#cfe3f7" stroke="#333" opacity="0.9"/>
+<text x="147.60000000000002" y="168" font-size="10">engine-unit</text>
+<circle cx="150.0" cy="174.0" r="4" fill="#d62728"><title>engine-unit.engine-unit-out-0</title></circle>
+<circle cx="150.0" cy="246.0" r="4" fill="#1f77b4"><title>engine-unit.pipe-in</title></circle>
+<circle cx="150.0" cy="258.0" r="4" fill="#1f77b4"><title>engine-unit.steel-plate-in</title></circle>
+<circle cx="150.0" cy="162.0" r="4" fill="#1f77b4"><title>engine-unit.iron-gear-wheel-in</title></circle>
+<rect x="36" y="144" width="84" height="36" fill="#cfe3f7" stroke="#333" opacity="0.9"/>
+<text x="39.599999999999994" y="156" font-size="10">iron-gear-wheel</text>
+<circle cx="114.0" cy="150.0" r="4" fill="#d62728"><title>iron-gear-wheel.iron-gear-wheel-out-0</title></circle>
+<circle cx="42.0" cy="174.0" r="4" fill="#1f77b4"><title>iron-gear-wheel.iron-plate-in</title></circle>
+<rect x="48" y="204" width="72" height="84" fill="#cfe3f7" stroke="#333" opacity="0.9"/>
+<text x="51.599999999999994" y="216" font-size="10">pipe</text>
+<circle cx="114.0" cy="282.0" r="4" fill="#d62728"><title>pipe.pipe-out-0</title></circle>
+<circle cx="54.0" cy="210.0" r="4" fill="#1f77b4"><title>pipe.iron-plate-in</title></circle>
+<rect x="0" y="24" width="24" height="12" fill="#d9f2d9" stroke="#333" opacity="0.9"/>
+<text x="3.5999999999999996" y="36" font-size="10">in-advanced-circuit</text>
+<circle cx="18.0" cy="30.0" r="4" fill="#d62728"><title>in-advanced-circuit.advanced-circuit-out-0</title></circle>
+<rect x="0" y="204" width="24" height="12" fill="#d9f2d9" stroke="#333" opacity="0.9"/>
+<text x="3.5999999999999996" y="216" font-size="10">in-iron-plate</text>
+<circle cx="18.0" cy="210.0" r="4" fill="#d62728"><title>in-iron-plate.iron-plate-out-0</title></circle>
+<rect x="0" y="252" width="24" height="12" fill="#d9f2d9" stroke="#333" opacity="0.9"/>
+<text x="3.5999999999999996" y="264" font-size="10">in-steel-plate</text>
+<circle cx="18.0" cy="258.0" r="4" fill="#d62728"><title>in-steel-plate.steel-plate-out-0</title></circle>
+<rect x="0" y="108" width="24" height="12" fill="#d9f2d9" stroke="#333" opacity="0.9"/>
+<text x="3.5999999999999996" y="120" font-size="10">in-sulfur</text>
+<circle cx="18.0" cy="114.0" r="4" fill="#d62728"><title>in-sulfur.sulfur-out-0</title></circle>
+<rect x="648" y="96" width="24" height="12" fill="#f7ddc7" stroke="#333" opacity="0.9"/>
+<text x="651.5999999999999" y="108" font-size="10">out</text>
+<circle cx="654.0" cy="102.0" r="4" fill="#1f77b4"><title>out.chemical-science-pack-in</title></circle>
+<polyline points="30.0,30.0 42.0,30.0" fill="none" stroke="#6a3d9a" stroke-width="2" opacity="0.8"><title>advanced-circuit:in-advanced-circuit-t0[0]</title></polyline>
+<polyline points="630.0,102.0 642.0,102.0" fill="none" stroke="#6a3d9a" stroke-width="2" opacity="0.8"><title>chemical-science-pack:chemical-science-pack-t0[0]</title></polyline>
+<polyline points="138.0,174.0 138.0,186.0 138.0,198.0 126.0,198.0 114.0,198.0 102.0,198.0 102.0,186.0 102.0,138.0 102.0,126.0 90.0,126.0 78.0,126.0 66.0,126.0 54.0,126.0 42.0,126.0 30.0,126.0 30.0,138.0 18.0,138.0 18.0,126.0 18.0,90.0 18.0,78.0 18.0,18.0 18.0,6.0 30.0,6.0 42.0,6.0 42.0,18.0" fill="none" stroke="#6a3d9a" stroke-width="2" opacity="0.8"><title>engine-unit:engine-unit-t0[0]</title></polyline>
+<polyline points="114.0,138.0 126.0,138.0 126.0,150.0 126.0,162.0 138.0,162.0" fill="none" stroke="#6a3d9a" stroke-width="2" opacity="0.8"><title>iron-gear-wheel:iron-gear-wheel-t0[0]</title></polyline>
+<polyline points="30.0,210.0 30.0,198.0 30.0,186.0 42.0,186.0" fill="none" stroke="#6a3d9a" stroke-width="2" opacity="0.8"><title>iron-plate:in-iron-plate-t0[0]</title></polyline>
+<polyline points="18.0,198.0 18.0,186.0 6.0,186.0 6.0,198.0 6.0,222.0 6.0,234.0 18.0,234.0 30.0,234.0 42.0,234.0 42.0,222.0 42.0,210.0" fill="none" stroke="#6a3d9a" stroke-width="2" opacity="0.8"><title>iron-plate:in-iron-plate-t0[1]</title></polyline>
+<polyline points="126.0,282.0 126.0,270.0 126.0,258.0 126.0,246.0 138.0,246.0" fill="none" stroke="#6a3d9a" stroke-width="2" opacity="0.8"><title>pipe:pipe-t0[0]</title></polyline>
+<polyline points="30.0,258.0 30.0,270.0 30.0,282.0 30.0,294.0 42.0,294.0 54.0,294.0 66.0,294.0 78.0,294.0 90.0,294.0 102.0,294.0 114.0,294.0 126.0,294.0 138.0,294.0 138.0,282.0 138.0,270.0 138.0,258.0" fill="none" stroke="#6a3d9a" stroke-width="2" opacity="0.8"><title>steel-plate:in-steel-plate-t0[0]</title></polyline>
+<polyline points="30.0,114.0 42.0,114.0" fill="none" stroke="#6a3d9a" stroke-width="2" opacity="0.8"><title>sulfur:in-sulfur-t0[0]</title></polyline>
+</svg>

@@ -1,14 +1,24 @@
 """Benders-style optimization loop (M5/M6).
 
-Repeats master -> detailed routing -> cuts. The margin/area-slack schedule
-loosens the master when cuts alone are not fixing infeasibility, mirroring
-the "minimize infeasibility first" lexicographic intent.
+Repeats master -> detailed routing -> cuts over a schedule of
+``(margin, area_slack)`` rungs (tight -> loose).
 
-A routed placement does **not** end the loop: it becomes the incumbent, and
-the remaining budget keeps searching with the incumbent's area as a hard
-master bound (strictly smaller only), at the margin/slack that just
-succeeded. The loop therefore uses its whole time budget to tighten, and
-returns the best candidate found.
+**Feasibility phase** (no incumbent yet): walk the schedule from the tight
+end, loosening a rung per iteration, until some placement routes -- the
+"minimize infeasibility first" intent. ``start_loose`` instead begins at a
+moderately roomy rung so the first incumbent lands fast.
+
+**Tightening phase** (incumbent held): a routed placement does **not** end the
+loop. Each master carries the incumbent's area as a hard bound (strictly
+smaller only), and an adaptive controller chases the tightest rung that still
+*routes*: a routing success biases one rung tighter (chase smaller area), an
+unroutable placement loosens one rung (give the router room, while its cut
+forbids the repeat), and master-infeasibility steps to a tighter margin (which
+admits smaller areas). Area decreases monotonically, so this converges. This
+replaced an earlier one-way ratchet that froze the loop at whatever slack
+first routed -- which could strand it in a loose regime for the whole budget.
+
+The loop uses its whole time budget to tighten and returns the best candidate.
 """
 
 from __future__ import annotations
@@ -226,18 +236,19 @@ def optimize_loop(
     best: Candidate | None = None
     started = time.monotonic()
 
-    margin, slack = _SCHEDULE[_LOOSE_START] if start_loose else _SCHEDULE[0]
+    # Index into ``_SCHEDULE`` of the current (margin, area_slack) rung.
+    rung = _LOOSE_START if start_loose else 0
     for i in range(max_iterations):
         if time.monotonic() - started > time_budget_s:
             break
         if best is None and not start_loose:
-            # Feasibility phase: walk the loosening schedule from the tight end.
-            # (start_loose pins a moderately roomy rung so the first incumbent
-            # lands fast and the tightening phase does the margin walk-down.)
-            margin, slack = _SCHEDULE[min(i, len(_SCHEDULE) - 1)]
-        # Tightening phase: keep the rung that routed, bound the master by
-        # the incumbent so only strictly smaller placements come back. Fold in
-        # any runtime area cap (the tighter of the two wins).
+            # Feasibility phase: walk the loosening schedule from the tight end
+            # (start_loose instead pins a moderately roomy rung so the first
+            # incumbent lands fast without an intractably large master solve).
+            rung = min(i, len(_SCHEDULE) - 1)
+        margin, slack = _SCHEDULE[rung]
+        # Bound the master by the incumbent so only strictly smaller placements
+        # come back, folding in any runtime area cap (the tighter of the two).
         area_cap = best.area - 1 if best is not None else None
         if max_area is not None:
             area_cap = max_area if area_cap is None else min(area_cap, max_area)
@@ -260,14 +271,15 @@ def optimize_loop(
         iterations.append(it)
         if not master.ok:
             if best is None:
-                # All placements at this margin are cut off; the schedule
-                # will loosen next round.
+                # All placements at this rung are cut off; the schedule will
+                # loosen next round (feasibility phase).
                 continue
-            # No strictly tighter placement at this margin: retry with less
-            # spacing (tighter areas live at smaller margins), stop at 1.
-            if margin <= 1:
+            # Tightening phase: no placement smaller than the incumbent fits at
+            # this rung's margin. A tighter margin admits smaller areas, so step
+            # tighter and keep chasing; stop once the tightest rung is exhausted.
+            if rung == 0:
                 break
-            margin -= 1
+            rung -= 1
             continue
 
         t0 = time.monotonic()
@@ -275,14 +287,29 @@ def optimize_loop(
         it.routing_s = time.monotonic() - t0
         it.routing = routing
         if routing.feasible:
-            # New incumbent (the area cap guarantees it is strictly better);
-            # keep searching with the remaining budget.
+            # New incumbent (the area cap guarantees it is strictly better).
             best = _assemble(problem, master, routing, db, label)
+            # Tightening controller: chase the tightest *routable* rung. Every
+            # success biases one rung tighter (less slack, then less margin) so
+            # the loop actively drives toward the tight regime rather than
+            # lingering wherever the first placement happened to route -- the
+            # old schedule was a one-way loosening ratchet that froze the loop
+            # at a loose slack. Area only ever decreases (each incumbent is
+            # strictly smaller), so this converges monotonically.
+            if rung > 0:
+                rung -= 1
             continue
 
         new_cuts = explain_failures(problem, master, routing, db, belt=belt)
         it.new_cuts = new_cuts
         cuts.extend(new_cuts)
+        if best is not None and rung < len(_SCHEDULE) - 1:
+            # Tightening phase: this rung's placement was unroutable. Loosen one
+            # rung to give the router more room at the same area cap while the
+            # fresh cut prevents repeating the bad placement. Paired with the
+            # tighten-on-success step above, this is a controller that settles
+            # on the tightest rung that actually routes.
+            rung += 1
 
     return LoopResult(
         problem=problem,

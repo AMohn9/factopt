@@ -464,12 +464,34 @@ ladder ends in a roomy fallback.
 
 **Tightening phase.** The first routed placement becomes the incumbent and
 routing success *does not* end the loop. Subsequent masters carry
-\(A \le A^{inc} - 1\) at the margin/slack rung that just succeeded, so any
-returned placement is strictly smaller; each new routed solution replaces the
-incumbent. If the master comes back infeasible (no strictly smaller placement
-exists at this margin), the margin is decremented — tighter layouts live at
-smaller margins — and the loop stops when margin 1 is exhausted or the budget
-runs out. More budget therefore monotonically tightens the result.
+\(A \le A^{inc} - 1\), so any returned placement is strictly smaller; each new
+routed solution replaces the incumbent. Rather than freeze the rung that first
+routed, an **adaptive controller** chases the tightest rung that still routes:
+
+- a **routing success** biases one rung *tighter* (less area slack, then less
+  margin) — actively drive toward the tight regime instead of lingering where
+  the first placement happened to route;
+- an **unroutable** placement loosens one rung (give the router more room at
+  the same area cap) while its cut forbids the exact repeat;
+- **master-infeasibility** (nothing smaller fits at this margin) steps to a
+  *tighter* margin, which admits smaller areas; the loop stops when the
+  tightest rung is exhausted or the budget runs out.
+
+Because the area cap only ever shrinks (each incumbent is strictly smaller),
+this controller converges, and more budget monotonically tightens the result.
+This replaced an earlier design in which the tightening phase kept the rung
+that first routed and only decremented the margin — a **one-way ratchet**: if
+an early tight-slack placement failed to route (sensitive to master
+nondeterminism and to router quality), the loop loosened to a higher slack and
+was *stranded* there for the rest of the budget, never re-tightening slack.
+That single dynamic explained most of the run-to-run footprint variance.
+
+`start_loose` seeds the feasibility phase at a moderately roomy rung (not the
+loosest: a large margin makes the master's stage-1 area minimization
+intractable within a per-solve time limit, so the incumbent lands bloated and
+tightening crawls). Runtime `max_w`/`max_h`/`max_area` caps apply to every
+solve (folded together with the incumbent bound, tighter wins), so a caller can
+ask "does this route inside a known footprint?".
 
 Cuts accumulate across both phases and across rungs; a cut derived at margin 2
 still validly excludes the same geometric failure at margin 1.
