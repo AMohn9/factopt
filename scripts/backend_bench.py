@@ -44,6 +44,8 @@ def main() -> int:
     p.add_argument("--iters", type=int, default=6, help="max Benders iterations")
     p.add_argument("--cell", type=int, default=4,
                    help="coarse-routing cell size; 0 disables coarse routing")
+    p.add_argument("--workers", type=int, default=None,
+                   help="CP-SAT search portfolio size (default: all cores)")
     p.add_argument("--no-fuse", dest="fuse", action="store_false")
     args = p.parse_args()
 
@@ -57,6 +59,7 @@ def main() -> int:
             args.target, args.rate, vanilla.DB, fuse=args.fuse,
             max_iterations=args.iters, master_time_limit_s=args.master_s,
             time_budget_s=args.budget, coarse_cell=coarse_cell, backend=be,
+            workers=args.workers,
         )
         elapsed = time.time() - t
         print(f"feasible={res.feasible}  elapsed={elapsed:.0f}s  "

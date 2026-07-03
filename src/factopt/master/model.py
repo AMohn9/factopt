@@ -17,6 +17,7 @@ before solving, so detailed-routing failures constrain future placements.
 from __future__ import annotations
 
 import math
+import os
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 
@@ -313,7 +314,7 @@ def solve_master(
     area_slack: float = 0.0,
     coarse_cell: int | None = None,
     time_limit_s: float = 20.0,
-    workers: int = 8,
+    workers: int | None = None,
     max_area: int | None = None,
     backend: Backend = "cpsat",
 ) -> MasterSolution:
@@ -324,8 +325,12 @@ def solve_master(
     ``max_area``, if given, is a hard bounding-box cap (both stages) -- the
     loop uses it as an incumbent bound so later iterations only look for
     strictly tighter placements. ``backend`` selects the solver engine
-    (``"cpsat"`` default, or ``"scip"``).
+    (``"cpsat"`` default, or ``"scip"``). ``workers`` is the CP-SAT search
+    portfolio size; ``None`` uses every available core (SCIP is single-threaded
+    and ignores it).
     """
+    if workers is None:
+        workers = os.cpu_count() or 8
     v = _build_placement(problem, margin, max_w, max_h, backend)
     model = v.model
 

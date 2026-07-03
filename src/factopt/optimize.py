@@ -163,13 +163,14 @@ def _try_loop(
     budget_s: float,
     fuse: bool,
     backend: str = "cpsat",
+    workers: int | None = None,
 ) -> Candidate:
     from factopt.loop import optimize_loop
 
     try:
         res = optimize_loop(
             target, rate, db, time_budget_s=budget_s, master_time_limit_s=15.0,
-            fuse=fuse, backend=backend,
+            fuse=fuse, backend=backend, workers=workers,
         )
     except Exception as exc:
         return Candidate(strategy, ok=False, detail=f"{type(exc).__name__}: {exc}")
@@ -203,10 +204,12 @@ def optimize(
     strategies: tuple[str, ...] = DEFAULT_STRATEGIES,
     benders_budget_s: float = 180.0,
     backend: str = "cpsat",
+    workers: int | None = None,
 ) -> OptimizedBlock:
     """Return the tightest complete, target-meeting block for ``rate``/s of
     ``target``, trying every applicable generator. ``backend`` selects the
-    master solver engine for the loop strategies (``"cpsat"`` or ``"scip"``)."""
+    master solver engine for the loop strategies (``"cpsat"`` or ``"scip"``);
+    ``workers`` sets the CP-SAT portfolio size (``None`` = all cores)."""
     if rate <= 0:
         raise ValueError("rate must be positive")
     plan = solve_ratios(target, rate, db)
@@ -216,10 +219,10 @@ def optimize(
         "line": lambda: _try_line(target, rate, db),
         "bus": lambda: _try_bus(target, rate, db),
         "benders": lambda: _try_loop(
-            "benders", target, rate, db, benders_budget_s, False, backend
+            "benders", target, rate, db, benders_budget_s, False, backend, workers
         ),
         "dense": lambda: _try_loop(
-            "dense", target, rate, db, benders_budget_s, True, backend
+            "dense", target, rate, db, benders_budget_s, True, backend, workers
         ),
     }
     candidates = [tries[s]() for s in strategies if s in tries]

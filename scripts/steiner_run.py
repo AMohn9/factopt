@@ -37,6 +37,8 @@ def main() -> int:
                    help="disable dense direct-insertion fusion")
     p.add_argument("--backend", default="cpsat", choices=("cpsat", "scip"),
                    help="master solver engine")
+    p.add_argument("--workers", type=int, default=None,
+                   help="CP-SAT search portfolio size (default: all cores)")
     p.add_argument("--out-dir", default="blueprints/dense", help="artifact directory")
     args = p.parse_args()
 
@@ -51,6 +53,7 @@ def main() -> int:
         time_budget_s=args.budget,
         label=args.name,
         backend=args.backend,
+        workers=args.workers,
     )
     print(f"feasible={res.feasible} in {time.time() - t:.0f}s")
 

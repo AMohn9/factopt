@@ -164,12 +164,14 @@ def optimize_loop(
     label: str | None = None,
     fuse: bool = False,
     backend: Backend = "cpsat",
+    workers: int | None = None,
 ) -> LoopResult:
     """Run the Benders loop for ``rate`` items/s of ``target``.
 
     With ``fuse=True``, a fusable 2-level chain is packed as one dense
     direct-insertion cell (no belt for the internal item) before placement.
     ``backend`` selects the master solver engine (``"cpsat"`` or ``"scip"``).
+    ``workers`` is the CP-SAT search portfolio size (``None`` = all cores).
     """
     if plan is None:
         plan = solve_ratios(target, rate, db)
@@ -201,6 +203,7 @@ def optimize_loop(
             time_limit_s=master_time_limit_s,
             max_area=max_area,
             backend=backend,
+            workers=workers,
         )
         it = Iteration(index=i, margin=margin, area_slack=slack, master=master, routing=None)
         it.master_s = time.monotonic() - t0
