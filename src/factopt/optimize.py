@@ -156,13 +156,20 @@ def _try_bus(target: str, rate: float, db: Database) -> Candidate:
 
 
 def _try_loop(
-    strategy: str, target: str, rate: float, db: Database, budget_s: float, fuse: bool
+    strategy: str,
+    target: str,
+    rate: float,
+    db: Database,
+    budget_s: float,
+    fuse: bool,
+    backend: str = "cpsat",
 ) -> Candidate:
     from factopt.loop import optimize_loop
 
     try:
         res = optimize_loop(
-            target, rate, db, time_budget_s=budget_s, master_time_limit_s=15.0, fuse=fuse
+            target, rate, db, time_budget_s=budget_s, master_time_limit_s=15.0,
+            fuse=fuse, backend=backend,
         )
     except Exception as exc:
         return Candidate(strategy, ok=False, detail=f"{type(exc).__name__}: {exc}")
@@ -195,9 +202,11 @@ def optimize(
     db: Database,
     strategies: tuple[str, ...] = DEFAULT_STRATEGIES,
     benders_budget_s: float = 180.0,
+    backend: str = "cpsat",
 ) -> OptimizedBlock:
     """Return the tightest complete, target-meeting block for ``rate``/s of
-    ``target``, trying every applicable generator."""
+    ``target``, trying every applicable generator. ``backend`` selects the
+    master solver engine for the loop strategies (``"cpsat"`` or ``"scip"``)."""
     if rate <= 0:
         raise ValueError("rate must be positive")
     plan = solve_ratios(target, rate, db)
@@ -206,8 +215,12 @@ def optimize(
         "compact": lambda: _try_compact(target, rate, db),
         "line": lambda: _try_line(target, rate, db),
         "bus": lambda: _try_bus(target, rate, db),
-        "benders": lambda: _try_loop("benders", target, rate, db, benders_budget_s, False),
-        "dense": lambda: _try_loop("dense", target, rate, db, benders_budget_s, True),
+        "benders": lambda: _try_loop(
+            "benders", target, rate, db, benders_budget_s, False, backend
+        ),
+        "dense": lambda: _try_loop(
+            "dense", target, rate, db, benders_budget_s, True, backend
+        ),
     }
     candidates = [tries[s]() for s in strategies if s in tries]
 

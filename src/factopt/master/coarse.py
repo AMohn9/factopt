@@ -20,9 +20,9 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from ortools.sat.python import cp_model
-
 from factopt.macros.library import MacroProblem
+from factopt.master.backend import MasterModel, Solution
+from factopt.master.backend.base import Var
 from factopt.master.model import MasterVars
 
 Cell = tuple[int, int]  # (i, j) coarse coordinates
@@ -41,13 +41,13 @@ class CoarseVars:
     cols: int
     rows: int
     # Per (net, arc): integer flow 0..n_sinks and a bool "this net uses the arc".
-    flow: dict[tuple[str, Arc], cp_model.IntVar]
-    arc_used: dict[tuple[str, Arc], cp_model.IntVar]
-    cap: dict[Edge, cp_model.IntVar]
-    used: dict[Edge, cp_model.IntVar]
-    saturated: dict[Edge, cp_model.IntVar]
-    src_cell: dict[str, tuple[cp_model.IntVar, cp_model.IntVar]]
-    snk_cell: dict[tuple[str, int], tuple[cp_model.IntVar, cp_model.IntVar]]
+    flow: dict[tuple[str, Arc], Var]
+    arc_used: dict[tuple[str, Arc], Var]
+    cap: dict[Edge, Var]
+    used: dict[Edge, Var]
+    saturated: dict[Edge, Var]
+    src_cell: dict[str, tuple[Var, Var]]
+    snk_cell: dict[tuple[str, int], tuple[Var, Var]]
     v: MasterVars
 
     def congestion_expr(self):
@@ -86,19 +86,19 @@ def _edges(cols: int, rows: int) -> list[Edge]:
 
 
 def _cell_bools(
-    model: cp_model.CpModel,
-    ci: cp_model.IntVar,
-    cj: cp_model.IntVar,
+    model: MasterModel,
+    ci: Var,
+    cj: Var,
     cols: int,
     rows: int,
     tag: str,
-) -> dict[Cell, cp_model.IntVar]:
+) -> dict[Cell, Var]:
     """b[c] <=> (ci, cj) == c, via per-axis indicator channels."""
     bi = [model.new_bool_var(f"{tag}_i{i}") for i in range(cols)]
     bj = [model.new_bool_var(f"{tag}_j{j}") for j in range(rows)]
     model.add_map_domain(ci, bi)
     model.add_map_domain(cj, bj)
-    out: dict[Cell, cp_model.IntVar] = {}
+    out: dict[Cell, Var] = {}
     for i in range(cols):
         for j in range(rows):
             b = model.new_bool_var(f"{tag}_c{i}_{j}")
@@ -116,7 +116,7 @@ def add_coarse_routing(problem: MacroProblem, v: MasterVars, cell: int = 4) -> C
     # -- boundary capacities from macro coverage ---------------------------
     # A macro blocks a boundary row/column where it covers BOTH adjacent
     # tiles (it spans the boundary); crossings along its wall stay open.
-    cap: dict[Edge, cp_model.IntVar] = {}
+    cap: dict[Edge, Var] = {}
     for c1, c2 in edges:
         blocked_terms = []
         vertical = c1[0] != c2[0]  # boundary crossed by horizontal movement
@@ -141,10 +141,10 @@ def add_coarse_routing(problem: MacroProblem, v: MasterVars, cell: int = 4) -> C
             spans = model.new_bool_var(f"{tag}_spans")
             lo = model.new_bool_var(f"{tag}_lo")
             hi = model.new_bool_var(f"{tag}_hi")
-            model.add(pos <= b - 1).only_enforce_if(lo)
-            model.add(pos >= b).only_enforce_if(lo.negated())
-            model.add(pos + span >= b + 1).only_enforce_if(hi)
-            model.add(pos + span <= b).only_enforce_if(hi.negated())
+            model.enforce(lo, pos, "<=", b - 1)
+            model.enforce(model.neg(lo), pos, ">=", b)
+            model.enforce(hi, pos + span, ">=", b + 1)
+            model.enforce(model.neg(hi), pos + span, "<=", b)
             model.add_multiplication_equality(spans, [lo, hi])
 
             # Overlap of the macro with the boundary's row/column range.
@@ -165,18 +165,18 @@ def add_coarse_routing(problem: MacroProblem, v: MasterVars, cell: int = 4) -> C
         cap[(c1, c2)] = c
 
     # -- cells at least partially inside the bounding box ------------------
-    inbox: dict[Cell, cp_model.IntVar] = {}
+    inbox: dict[Cell, Var] = {}
     for i in range(cols):
         for j in range(rows):
             b = model.new_bool_var(f"inbox_{i}_{j}")
-            model.add(v.bbox_w >= i * cell + 1).only_enforce_if(b)
-            model.add(v.bbox_h >= j * cell + 1).only_enforce_if(b)
+            model.enforce(b, v.bbox_w, ">=", i * cell + 1)
+            model.enforce(b, v.bbox_h, ">=", j * cell + 1)
             bx_ = model.new_bool_var(f"inbox_{i}_{j}_x")
-            model.add(v.bbox_w >= i * cell + 1).only_enforce_if(bx_)
-            model.add(v.bbox_w <= i * cell).only_enforce_if(bx_.negated())
+            model.enforce(bx_, v.bbox_w, ">=", i * cell + 1)
+            model.enforce(model.neg(bx_), v.bbox_w, "<=", i * cell)
             by_ = model.new_bool_var(f"inbox_{i}_{j}_y")
-            model.add(v.bbox_h >= j * cell + 1).only_enforce_if(by_)
-            model.add(v.bbox_h <= j * cell).only_enforce_if(by_.negated())
+            model.enforce(by_, v.bbox_h, ">=", j * cell + 1)
+            model.enforce(model.neg(by_), v.bbox_h, "<=", j * cell)
             model.add_multiplication_equality(b, [bx_, by_])
             inbox[(i, j)] = b
 
@@ -185,10 +185,10 @@ def add_coarse_routing(problem: MacroProblem, v: MasterVars, cell: int = 4) -> C
     # reifies "any flow on this arc", which is what shares capacity and what
     # the congestion/length objective counts (a trunk belt crosses a boundary
     # once regardless of how many sinks it feeds).
-    flow: dict[tuple[str, Arc], cp_model.IntVar] = {}
-    arc_used: dict[tuple[str, Arc], cp_model.IntVar] = {}
-    src_cell: dict[str, tuple[cp_model.IntVar, cp_model.IntVar]] = {}
-    snk_cell: dict[tuple[str, int], tuple[cp_model.IntVar, cp_model.IntVar]] = {}
+    flow: dict[tuple[str, Arc], Var] = {}
+    arc_used: dict[tuple[str, Arc], Var] = {}
+    src_cell: dict[str, tuple[Var, Var]] = {}
+    snk_cell: dict[tuple[str, int], tuple[Var, Var]] = {}
 
     for net in problem.nets:
         k = len(net.sinks)
@@ -241,8 +241,8 @@ def add_coarse_routing(problem: MacroProblem, v: MasterVars, cell: int = 4) -> C
                 )
 
     # -- shared capacity + congestion ---------------------------------------
-    used: dict[Edge, cp_model.IntVar] = {}
-    saturated: dict[Edge, cp_model.IntVar] = {}
+    used: dict[Edge, Var] = {}
+    saturated: dict[Edge, Var] = {}
     for e in edges:
         c1, c2 = e
         total = sum(
@@ -253,8 +253,8 @@ def add_coarse_routing(problem: MacroProblem, v: MasterVars, cell: int = 4) -> C
         model.add(u == total)
         model.add(u <= cap[e])
         s = model.new_bool_var(f"sat_{e}")
-        model.add(u >= cap[e]).only_enforce_if(s)
-        model.add(u <= cap[e] - 1).only_enforce_if(s.negated())
+        model.enforce(s, u, ">=", cap[e])
+        model.enforce(model.neg(s), u, "<=", cap[e] - 1)
         used[e] = u
         saturated[e] = s
 
@@ -273,14 +273,14 @@ def add_coarse_routing(problem: MacroProblem, v: MasterVars, cell: int = 4) -> C
     )
 
 
-def extract_coarse(cv: CoarseVars, solver: cp_model.CpSolver) -> CoarseSolution:
+def extract_coarse(cv: CoarseVars, solution: Solution) -> CoarseSolution:
     sol = CoarseSolution(cell=cv.cell, cols=cv.cols, rows=cv.rows)
     for (net_id, arc), u in cv.arc_used.items():
-        if solver.value(u):
+        if solution.value(u):
             sol.routes.setdefault(net_id, []).append(arc)
     for e in cv.cap:
-        u = solver.value(cv.used[e])
-        c = solver.value(cv.cap[e])
+        u = solution.value(cv.used[e])
+        c = solution.value(cv.cap[e])
         if u or c < cv.cell:
             sol.utilization[e] = (u, c)
     return sol

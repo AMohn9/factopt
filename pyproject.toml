@@ -12,6 +12,7 @@ license = { text = "MIT" }
 dependencies = [
     "pulp>=2.8",
     "ortools>=9.10",
+    "pyscipopt>=5.0",
     "networkx>=3.2",
     "factorio-draftsman>=3.3",
 ]
@@ -31,3 +32,4 @@ target-version = "py311"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+markers = ["slow: slow-running tests (deselect with '-m \"not slow\"')"]

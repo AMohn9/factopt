@@ -19,6 +19,7 @@ from dataclasses import dataclass, field
 from factopt.codec import encode
 from factopt.data.database import Database
 from factopt.macros import MacroProblem, build_problem
+from factopt.master.backend import Backend
 from factopt.master.cuts import BendersCut
 from factopt.master.model import MasterSolution, solve_master
 from factopt.model.blueprint import Blueprint
@@ -162,11 +163,13 @@ def optimize_loop(
     time_budget_s: float = 240.0,
     label: str | None = None,
     fuse: bool = False,
+    backend: Backend = "cpsat",
 ) -> LoopResult:
     """Run the Benders loop for ``rate`` items/s of ``target``.
 
     With ``fuse=True``, a fusable 2-level chain is packed as one dense
     direct-insertion cell (no belt for the internal item) before placement.
+    ``backend`` selects the master solver engine (``"cpsat"`` or ``"scip"``).
     """
     if plan is None:
         plan = solve_ratios(target, rate, db)
@@ -197,6 +200,7 @@ def optimize_loop(
             coarse_cell=coarse_cell,
             time_limit_s=master_time_limit_s,
             max_area=max_area,
+            backend=backend,
         )
         it = Iteration(index=i, margin=margin, area_slack=slack, master=master, routing=None)
         it.master_s = time.monotonic() - t0

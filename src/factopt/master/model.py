@@ -20,10 +20,10 @@ import math
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 
-from ortools.sat.python import cp_model
-
 from factopt.macros.cell import _SIDE_VEC, MacroCell, PlacedMacro, rotated
 from factopt.macros.library import MacroProblem
+from factopt.master.backend import Backend, MasterModel, make_model
+from factopt.master.backend.base import Var
 
 if TYPE_CHECKING:
     from factopt.master.coarse import CoarseSolution
@@ -64,25 +64,25 @@ class MasterVars:
     """Model variables shared between the placement builder and extensions
     (coarse routing, cuts)."""
 
-    model: cp_model.CpModel
-    x: dict[str, cp_model.IntVar]
-    y: dict[str, cp_model.IntVar]
-    bbox_w: cp_model.IntVar
-    bbox_h: cp_model.IntVar
+    model: MasterModel
+    x: dict[str, Var]
+    y: dict[str, Var]
+    bbox_w: Var
+    bbox_h: Var
     max_w: int
     max_h: int
     # Orientation: per macro, the 4 rotated cell variants, one bool per
     # variant (exactly one true), an index channel, and w/h as IntVars.
     cells: dict[str, list[MacroCell]] = field(default_factory=dict)
-    orient: dict[str, list[cp_model.IntVar]] = field(default_factory=dict)
-    o_idx: dict[str, cp_model.IntVar] = field(default_factory=dict)
-    w: dict[str, cp_model.IntVar] = field(default_factory=dict)
-    h: dict[str, cp_model.IntVar] = field(default_factory=dict)
+    orient: dict[str, list[Var]] = field(default_factory=dict)
+    o_idx: dict[str, Var] = field(default_factory=dict)
+    w: dict[str, Var] = field(default_factory=dict)
+    h: dict[str, Var] = field(default_factory=dict)
     # Reversible input lanes: per (macro, port) a bool "use the reverse end",
     # and its AND with each orientation bool (reversal is orthogonal to the
     # quarter-turn, so the port tile depends on both).
-    rev: dict[tuple[str, str], cp_model.IntVar] = field(default_factory=dict)
-    rev_orient: dict[tuple[str, str, int], cp_model.IntVar] = field(default_factory=dict)
+    rev: dict[tuple[str, str], Var] = field(default_factory=dict)
+    rev_orient: dict[tuple[str, str, int], Var] = field(default_factory=dict)
 
     def _port_terms(self, macro_id: str, port_id: str, access: bool):
         """Linear (x, y) expressions of a port's tile (``access=False``) or its
@@ -134,9 +134,13 @@ def default_bounds(problem: MacroProblem, margin: int) -> tuple[int, int]:
 
 
 def _build_placement(
-    problem: MacroProblem, margin: int, max_w: int | None, max_h: int | None
+    problem: MacroProblem,
+    margin: int,
+    max_w: int | None,
+    max_h: int | None,
+    backend: Backend = "cpsat",
 ) -> MasterVars:
-    model = cp_model.CpModel()
+    model = make_model(backend)
     macros = problem.macros
 
     if max_w is None or max_h is None:
@@ -153,10 +157,10 @@ def _build_placement(
     # Orientation: 4 rotated variants per macro; edge-pinned I/O macros keep
     # their authored orientation (their contract is a fixed boundary side).
     cells: dict[str, list[MacroCell]] = {}
-    orient: dict[str, list[cp_model.IntVar]] = {}
-    o_idx: dict[str, cp_model.IntVar] = {}
-    w: dict[str, cp_model.IntVar] = {}
-    h: dict[str, cp_model.IntVar] = {}
+    orient: dict[str, list[Var]] = {}
+    o_idx: dict[str, Var] = {}
+    w: dict[str, Var] = {}
+    h: dict[str, Var] = {}
     for mid, m in macros.items():
         cells[mid] = [rotated(m, k) for k in range(4)]
         ob = [model.new_bool_var(f"o_{mid}_{k}") for k in range(4)]
@@ -173,8 +177,8 @@ def _build_placement(
 
     # Reversible input lanes: a bool per (macro, port) picking the reverse end,
     # plus its AND with each orientation bool (the port tile depends on both).
-    rev: dict[tuple[str, str], cp_model.IntVar] = {}
-    rev_orient: dict[tuple[str, str, int], cp_model.IntVar] = {}
+    rev: dict[tuple[str, str], Var] = {}
+    rev_orient: dict[tuple[str, str, int], Var] = {}
     for mid, m in macros.items():
         for p in m.ports:
             if not p.reversible:
@@ -187,15 +191,9 @@ def _build_placement(
                 rev_orient[(mid, p.id, k)] = aux
 
     # No-overlap with a `margin`-tile separation: inflate each rectangle.
-    xi, yi = [], []
-    for mid in macros:
-        xe = model.new_int_var(0, max_w + max_dim + margin, f"xe_{mid}")
-        ye = model.new_int_var(0, max_h + max_dim + margin, f"ye_{mid}")
-        model.add(xe == x[mid] + w[mid] + margin)
-        model.add(ye == y[mid] + h[mid] + margin)
-        xi.append(model.new_interval_var(x[mid], w[mid] + margin, xe, f"xi_{mid}"))
-        yi.append(model.new_interval_var(y[mid], h[mid] + margin, ye, f"yi_{mid}"))
-    model.add_no_overlap_2d(xi, yi)
+    model.add_no_overlap(
+        [(x[mid], w[mid] + margin, y[mid], h[mid] + margin) for mid in macros]
+    )
 
     # Inside the bounding box.
     for mid in macros:
@@ -218,13 +216,13 @@ def _build_placement(
                     sides.add(p.reverse.side)
             ck = cells[mid][k]
             if "west" in sides and pinned != "west":
-                model.add(x[mid] >= 2).only_enforce_if(orient[mid][k])
+                model.enforce(orient[mid][k], x[mid], ">=", 2)
             if "east" in sides and pinned != "east":
-                model.add(x[mid] + ck.width + 2 <= bbox_w).only_enforce_if(orient[mid][k])
+                model.enforce(orient[mid][k], x[mid] + ck.width + 2, "<=", bbox_w)
             if "north" in sides and pinned != "north":
-                model.add(y[mid] >= 2).only_enforce_if(orient[mid][k])
+                model.enforce(orient[mid][k], y[mid], ">=", 2)
             if "south" in sides and pinned != "south":
-                model.add(y[mid] + ck.height + 2 <= bbox_h).only_enforce_if(orient[mid][k])
+                model.enforce(orient[mid][k], y[mid] + ck.height + 2, "<=", bbox_h)
 
     # Edge pins: west-pinned macros hug x=0, east-pinned hug the east edge.
     for mid, side in problem.pins.items():
@@ -306,16 +304,6 @@ def flow_distance(problem: MacroProblem, placements: dict[str, PlacedMacro]) -> 
     return total
 
 
-def _solve(
-    model: cp_model.CpModel, time_limit_s: float, workers: int
-) -> tuple[cp_model.CpSolver, str]:
-    solver = cp_model.CpSolver()
-    solver.parameters.max_time_in_seconds = time_limit_s
-    solver.parameters.num_workers = workers
-    status = solver.solve(model)
-    return solver, solver.status_name(status)
-
-
 def solve_master(
     problem: MacroProblem,
     cuts: "list[BendersCut] | None" = None,
@@ -327,6 +315,7 @@ def solve_master(
     time_limit_s: float = 20.0,
     workers: int = 8,
     max_area: int | None = None,
+    backend: Backend = "cpsat",
 ) -> MasterSolution:
     """Solve placement (and coarse routing when ``coarse_cell`` is set).
 
@@ -334,9 +323,10 @@ def solve_master(
     minimizing flow distance, trading footprint for shorter routes.
     ``max_area``, if given, is a hard bounding-box cap (both stages) -- the
     loop uses it as an incumbent bound so later iterations only look for
-    strictly tighter placements.
+    strictly tighter placements. ``backend`` selects the solver engine
+    (``"cpsat"`` default, or ``"scip"``).
     """
-    v = _build_placement(problem, margin, max_w, max_h)
+    v = _build_placement(problem, margin, max_w, max_h, backend)
     model = v.model
 
     coarse_vars = None
@@ -356,9 +346,9 @@ def solve_master(
     if max_area is not None:
         model.add(area <= max_area)
     model.minimize(area)
-    s1, st1 = _solve(model, time_limit_s, workers)
-    if st1 not in ("OPTIMAL", "FEASIBLE"):
-        return MasterSolution(status=st1)
+    s1 = model.solve(time_limit_s, workers)
+    if not s1.ok:
+        return MasterSolution(status=s1.status)
     best_area = s1.value(area)
 
     # Stage 2: bound area, minimize flow-weighted distance (+ congestion).
@@ -371,9 +361,9 @@ def solve_master(
     if coarse_vars is not None:
         objective = objective + coarse_vars.congestion_expr()
     model.minimize(objective)
-    s2, st2 = _solve(model, time_limit_s, workers)
-    if st2 not in ("OPTIMAL", "FEASIBLE"):
-        s2, st2 = s1, st1  # tight time limits can starve stage 2; keep stage 1
+    s2 = model.solve(time_limit_s, workers)
+    if not s2.ok:
+        s2 = s1  # tight time limits can starve stage 2; keep stage 1
 
     placements = {}
     for mid in problem.macros:
@@ -391,7 +381,7 @@ def solve_master(
             port_choice=port_choice,
         )
     sol = MasterSolution(
-        status=st2,
+        status=s2.status,
         placements=placements,
         width=s2.value(v.bbox_w),
         height=s2.value(v.bbox_h),

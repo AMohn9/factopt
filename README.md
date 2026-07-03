@@ -22,7 +22,7 @@ that constrain the next master solve. See
 |-------|--------|--------|
 | Ratios / recipe selection | `factopt.ratios` | Linear programming (PuLP/CBC) |
 | Macro cells + ports | `factopt.macros` | Band/dense cells, one multi-sink net per belt trunk |
-| Master placement + coarse routing | `factopt.master` | CP-SAT (no-overlap, Steiner coarse flows, cuts) |
+| Master placement + coarse routing | `factopt.master` | CP-SAT (no-overlap, Steiner coarse flows, cuts); pluggable solver backend (SCIP experimental) |
 | Detailed routing | `factopt.routing` | Multi-net negotiated congestion over Steiner-tree A\* (splitter junctions) |
 | Cut loop | `factopt.loop` | master → route → explain failures → cuts |
 | Static validation | `factopt.validate` | Overlap, bounds, inserters, belt-path flows |
@@ -58,7 +58,7 @@ junctions (the VLSI-style answer, replacing the earlier pass-through
 chaining). **Input belt lanes are reversible** — since machines only *pick*
 from an input lane, the master feeds each from whichever end (west/east, or
 north/south once rotated) shortens the route, decided as a per-lane variable
-alongside the quarter-turn orientation. **154 tests pass.**
+alongside the quarter-turn orientation. **161 tests pass.**
 
 ### Foundations (done)
 
@@ -236,6 +236,25 @@ its markdown report and debug SVG lives in `blueprints/benders/`).
   written defensively but flagged for first-run verification.
 - **Scope:** single-product blocks, belt-based (no bots), no fluids, higher-rate
   general chains can fail to route (e.g. green science at 2/s).
+- **Pluggable master solver; SCIP is not competitive on the full model.** The
+  master (placement + coarse routing + cuts) is built against a solver facade
+  (`factopt.master.backend`) with two implementations: CP-SAT (default) and
+  SCIP via PySCIPOpt (`solve_master(..., backend="scip")`, threaded through
+  `optimize_loop`/`optimize` and `scripts/steiner_run.py --backend`). SCIP
+  reproduces the model at parity (bilinear `w*h` area as a nonconvex
+  constraint; no-overlap, min/max, division, and reified logic as big-M
+  linearizations). Benchmarking on green science 1/s
+  (`scripts/backend_bench.py`) shows CP-SAT routes a complete block in ~2
+  minutes while **SCIP finds no feasible solution to the coarse-routing master
+  even at a 20s (or 120s) per-solve limit** -- the big-M reformulation of
+  CP-SAT's global constraints is intractable for branch-and-cut at this size.
+  SCIP does solve placement-only (`--cell 0`), but slower and only to a
+  feasible (not proven-optimal) point. Takeaway: this constraint-heavy,
+  pure-integer packing problem is CP's home turf; if a different engine is
+  worth trying, a same-paradigm CP solver (CP Optimizer) or a much faster MILP
+  solver with native general constraints (Gurobi) is a better bet than SCIP,
+  and the two-stage-solve / coarse-routing reformulations are solver-independent
+  wins.
 - **Objective is still analytical.** Using the sim's measured throughput as the
   search objective is the intended next milestone.
 

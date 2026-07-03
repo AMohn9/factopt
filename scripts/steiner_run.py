@@ -35,6 +35,8 @@ def main() -> int:
                    help="total wall-clock budget (seconds)")
     p.add_argument("--no-fuse", dest="fuse", action="store_false",
                    help="disable dense direct-insertion fusion")
+    p.add_argument("--backend", default="cpsat", choices=("cpsat", "scip"),
+                   help="master solver engine")
     p.add_argument("--out-dir", default="blueprints/dense", help="artifact directory")
     args = p.parse_args()
 
@@ -48,6 +50,7 @@ def main() -> int:
         master_time_limit_s=args.master_s,
         time_budget_s=args.budget,
         label=args.name,
+        backend=args.backend,
     )
     print(f"feasible={res.feasible} in {time.time() - t:.0f}s")
 

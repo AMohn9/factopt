@@ -56,14 +56,6 @@ def pin_access_cut(
     )
 
 
-def _neq_literal(model, expr, value: int, tag: str):
-    """Bool literal that is true iff ``expr != value``."""
-    b = model.new_bool_var(tag)
-    model.add(expr != value).only_enforce_if(b)
-    model.add(expr == value).only_enforce_if(b.negated())
-    return b
-
-
 def apply_cuts(
     cuts: list[BendersCut],
     problem: MacroProblem,
@@ -78,12 +70,10 @@ def apply_cuts(
                 if mid not in v.x:
                     continue
                 px, py = pos[0], pos[1]
-                lits.append(_neq_literal(model, v.x[mid], px, f"cut{idx}_{mid}_x"))
-                lits.append(_neq_literal(model, v.y[mid], py, f"cut{idx}_{mid}_y"))
+                lits.append(model.is_ne(v.x[mid], px, f"cut{idx}_{mid}_x"))
+                lits.append(model.is_ne(v.y[mid], py, f"cut{idx}_{mid}_y"))
                 if len(pos) > 2:
-                    lits.append(
-                        _neq_literal(model, v.o_idx[mid], pos[2], f"cut{idx}_{mid}_o")
-                    )
+                    lits.append(model.is_ne(v.o_idx[mid], pos[2], f"cut{idx}_{mid}_o"))
             if lits:
                 model.add_bool_or(lits)
         elif cut.kind == "pin_access":
@@ -95,8 +85,8 @@ def apply_cuts(
             model.add(dx == ax - bx)
             model.add(dy == ay - by)
             lits = [
-                _neq_literal(model, dx, 0, f"cut{idx}_ndx"),
-                _neq_literal(model, dy, 0, f"cut{idx}_ndy"),
+                model.is_ne(dx, 0, f"cut{idx}_ndx"),
+                model.is_ne(dy, 0, f"cut{idx}_ndy"),
             ]
             model.add_bool_or(lits)
         else:
